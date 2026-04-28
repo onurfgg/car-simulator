@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Endless Highway</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB; /* Gökyüzü rengi (Sis ile eşleşecek) */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+        #score {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #instructions {
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        #gameover {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+            display: none;
+            text-align: center;
+        }
+        .restart-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 20px;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="ui">
+        <div id="score">Skor: 0</div>
+        <div id="instructions">
+            <b>YÖNTEMLER:</b><br>
+            ⬅️ Sol Ok / A : Sola Geç<br>
+            ➡️ Sağ Ok / D : Sağa Geç<br>
+            📷 V Tuşu : Kamera Değiştir (İç/Dış)
+        </div>
+    </div>
+    <div id="gameover">
+        KAZA YAPTIN!<br>
+        <button class="restart-btn" onclick="location.reload()">Tekrar Oyna</button>
+    </div>
+
+    <script>
+        // --- 1. SAHNE, KAMERA VE RENDERER KURULUMU ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x87CEEB, 30, 150); // Gerçekçi derinlik hissi için sis
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true; // Gölgeleri aç
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        // --- 2. AYDINLATMA (IŞIKLAR) ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(-20, 50, -20);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 150;
+        dirLight.shadow.camera.left = -50;
+        dirLight.shadow.camera.right = 50;
+        dirLight.shadow.camera.top = 50;
+        dirLight.shadow.camera.bottom = -50;
+        scene.add(dirLight);
+
+        // --- 3. ÇEVRE (YOL VE ÇİMENLER) ---
+        // Çimenlik Alan
+        const grassGeo = new THREE.PlaneGeometry(200, 400);
+        const grassMat = new THREE.MeshStandardMaterial({ color: 0x4CAF50 });
+        const grass = new THREE.Mesh(grassGeo, grassMat);
+        grass.rotation.x = -Math.PI / 2;
+        grass.receiveShadow = true;
+        scene.add(grass);
+
+        // Asfalt Yol
+        const roadWidth = 12;
+        const roadGeo = new THREE.PlaneGeometry(roadWidth, 400);
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.y = 0.01; // Çimenin bir tık üstünde
+        road.receiveShadow = true;
+        scene.add(road);
+
+        // Şerit Çizgileri
+        const lines = [];
+        const lineGeo = new THREE.PlaneGeometry(0.2, 3);
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        
+        for (let i = 0; i < 20; i++) {
+            // Sol şerit çizgisi
+            let line1 = new THREE.Mesh(lineGeo, lineMat);
+            line1.rotation.x = -Math.PI / 2;
+            line1.position.set(-roadWidth / 6, 0.02, -i * 10);
+            scene.add(line1);
+            lines.push(line1);
+
+            // Sağ şerit çizgisi
+            let line2 = new THREE.Mesh(lineGeo, lineMat);
+            line2.rotation.x = -Math.PI / 2;
+            line2.position.set(roadWidth / 6, 0.02, -i * 10);
+            scene.add(line2);
+            lines.push(line2);
+        }
+
+        // --- 4. ARAÇ OLUŞTURMA FONKSİYONU ---
+        function createCar(colorStr, isPlayer = false) {
+            const carGroup = new THREE.Group();
+
+            // Kasa (Alt gövde)
+            const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 4);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: colorStr });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.5;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            carGroup.add(body);
+
+            // Kabin (Üst gövde/Camlar)
+            const cabinGeo = new THREE.BoxGeometry(1.4, 0.5, 2);
+            const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+            const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+            cabin.position.set(0, 1.05, -0.2);
+            cabin.castShadow = true;
+            carGroup.add(cabin);
+
+            // Tekerlekler
+            const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 16);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            
+            const wheelPositions = [
+                [-1, 0.35, 1.2], [1, 0.35, 1.2],   // Arka tekerler
+                [-1, 0.35, -1.2], [1, 0.35, -1.2]  // Ön tekerler
+            ];
+
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.rotation.z = Math.PI / 2;
+                wheel.position.set(...pos);
+                wheel.castShadow = true;
+                carGroup.add(wheel);
+            });
+
+            // Farlar (Sadece oyuncu aracıysa gerçek ışık saçar)
+            if (isPlayer) {
+                const headLight1 = new THREE.PointLight(0xffffff, 1, 20);
+                headLight1.position.set(-0.6, 0.5, -2.1);
+                carGroup.add(headLight1);
+
+                const headLight2 = new THREE.PointLight(0xffffff, 1, 20);
+                headLight2.position.set(0.6, 0.5, -2.1);
+                carGroup.add(headLight2);
+            }
+
+            return carGroup;
+        }
+
+        // --- 5. OYUNCU VE OYUN DEĞİŞKENLERİ ---
+        const playerCar = createCar(0xff3333, true); // Kırmızı araba
+        scene.add(playerCar);
+
+        const lanes = [-roadWidth/3, 0, roadWidth/3]; // Sol, Orta, Sağ Şerit X koordinatları
+        let currentLane = 1; // Başlangıçta Orta Şerit (index 1)
+        playerCar.position.set(lanes[currentLane], 0, 0);
+
+        let speed = 1.0; // Oyun hızı
+        let score = 0;
+        let isGameOver = false;
+        let isFirstPerson = false; // Kamera modu
+        const trafficCars = [];
+
+        // --- 6. TRAFİK (RNG - RASTGELE ARAÇ ÜRETİMİ) ---
+        function spawnTrafficCar() {
+            const colors = [0x3344ff, 0x22cc22, 0xffaa00, 0x888888, 0xffffff];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            const tCar = createCar(randomColor, false);
+            
+            // Stokastik şerit seçimi
+            const randomLane = Math.floor(Math.random() * 3);
+            tCar.position.set(lanes[randomLane], 0, -120); // İleri bir noktada oluştur
+            tCar.rotation.y = Math.PI; // Bize doğru gelsinler diye döndürüyoruz
+
+            scene.add(tCar);
+            trafficCars.push({ mesh: tCar, lane: randomLane });
+        }
+
+        // Başlangıçta birkaç araç ekle
+        for(let i=0; i<3; i++) {
+            setTimeout(spawnTrafficCar, i * 1500);
+        }
+        
+        let spawnTimer = 0;
+
+        // --- 7. KONTROLLER ---
+        window.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
+
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                if (currentLane > 0) currentLane--;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                if (currentLane < 2) currentLane++;
+            } else if (e.key === 'v' || e.key === 'V') {
+                isFirstPerson = !isFirstPerson; // Kamera açısını değiştir
+            }
+        });
+
+        // --- 8. OYUN DÖNGÜSÜ (ANIMASYON) ---
+        function animate() {
+            if (isGameOver) return;
+            requestAnimationFrame(animate);
+
+            // Oyuncu aracını hedeflenen şeride yumuşakça (lerp) geçir
+            playerCar.position.x += (lanes[currentLane] - playerCar.position.x) * 0.15;
+
+            // Şerit çizgilerini hareket ettir (İllüzyon)
+            lines.forEach(line => {
+                line.position.z += speed;
+                if (line.position.z > 10) {
+                    line.position.z -= 200;
+                }
+            });
+
+            // Trafik araçlarını hareket ettir
+            for (let i = trafficCars.length - 1; i >= 0; i--) {
+                let tCar = trafficCars[i].mesh;
+                tCar.position.z += speed * 0.6; // Trafik araçları bizim hızımızdan yavaş (bize yaklaşıyorlar)
+
+                // Çarpışma Kontrolü (Bounding Box mantığı)
+                const distanceZ = Math.abs(playerCar.position.z - tCar.position.z);
+                const distanceX = Math.abs(playerCar.position.x - tCar.position.x);
+                
+                if (distanceZ < 3.5 && distanceX < 1.5) {
+                    isGameOver = true;
+                    document.getElementById('gameover').style.display = 'block';
+                }
+
+                // Kameranın arkasına geçen aracı sil
+                if (tCar.position.z > 20) {
+                    scene.remove(tCar);
+                    trafficCars.splice(i, 1);
+                    score += 10;
+                    document.getElementById('score').innerText = "Skor: " + score;
+                    speed += 0.01; // Oyun gittikçe hızlansın
+                }
+            }
+
+            // Yeni araç spawnlama
+            spawnTimer++;
+            // Hız arttıkça daha hızlı araç spawnla
+            if (spawnTimer > (90 - speed * 10)) { 
+                spawnTrafficCar();
+                spawnTimer = 0;
+            }
+
+            // KAMERA YÖNETİMİ
+            if (isFirstPerson) {
+                // Direksiyon başı görünümü
+                camera.position.set(playerCar.position.x, 1.2, playerCar.position.z - 0.5);
+                camera.lookAt(playerCar.position.x, 1.2, playerCar.position.z - 50);
+            } else {
+                // Klasik araba arkası (Third-Person) görünümü
+                // Kamerayı da yumuşakça arabanın arkasından takip ettir
+                const targetCamX = playerCar.position.x;
+                camera.position.x += (targetCamX - camera.position.x) * 0.1;
+                camera.position.y = 4;
+                camera.position.z = playerCar.position.z + 10;
+                camera.lookAt(playerCar.position.x, 0, playerCar.position.z - 20);
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Pencere yeniden boyutlandırıldığında canvası güncelle
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // Oyunu Başlat
+        animate();
+    </script>
+</body>
+</html>
