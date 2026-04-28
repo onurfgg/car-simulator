@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Endless Highway - Arcade Edition</title>
+    <title>3D Endless Highway - Ultimate Arcade</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
             background-color: #87CEEB; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
         }
         canvas {
             display: block;
@@ -45,6 +46,29 @@
             border-radius: 8px;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255,255,255,0.2);
+            line-height: 1.5;
+        }
+        /* YENİ: HIZ GÖSTERGESİ */
+        #speedometer {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            color: #00ffff;
+            text-align: right;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 2px 2px 4px rgba(0,0,0,0.9);
+            font-family: monospace;
+            pointer-events: none;
+        }
+        #speed-val {
+            font-size: 64px;
+            font-weight: 900;
+            line-height: 0.8;
+        }
+        #speed-unit {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            opacity: 0.8;
         }
         #gameover {
             position: absolute;
@@ -87,7 +111,6 @@
             background: #059669;
             transform: scale(1.05);
         }
-        /* Altın toplama animasyonu için ufak bir CSS hilesi */
         @keyframes coinCollect {
             0% { transform: scale(1); color: #ffde00; }
             50% { transform: scale(1.2); color: #fff; }
@@ -105,12 +128,20 @@
             <div id="highscore">En Yüksek: 0</div>
         </div>
         <div id="instructions">
-            <b>YÖNTEMLER:</b><br>
+            <b>KONTROLLER:</b><br>
             ⬅️ / ➡️ : Şerit Değiştir<br>
+            ⬆️ / W : Gaz (Hızlan)<br>
+            ⬇️ / S : Fren (Yavaşla)<br>
             📷 V Tuşu : Kamera (İç/Dış)<br>
             🟡 Altınlar : +50 Puan
         </div>
     </div>
+    
+    <div id="speedometer">
+        <div id="speed-val">100</div>
+        <div id="speed-unit">KM/H</div>
+    </div>
+
     <div id="gameover">
         KAZA YAPTIN!
         <div id="gameover-score"></div>
@@ -118,16 +149,17 @@
     </div>
 
     <script>
-        // --- HIGH SCORE SİSTEMİ ---
+        // --- HIGH SCORE ---
         let bestScore = localStorage.getItem('endlessHighScore') || 0;
         document.getElementById('highscore').innerText = "En Yüksek: " + bestScore;
 
-        // --- 1. SAHNE VE KAMERA ---
+        // --- SAHNE VE KAMERA ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB); 
         scene.fog = new THREE.Fog(0x87CEEB, 30, 150); 
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        let baseFov = 60; // Dinamik FOV için temel değer
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -135,7 +167,7 @@
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // --- 2. AYDINLATMA ---
+        // --- AYDINLATMA ---
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
 
@@ -152,7 +184,7 @@
         dirLight.shadow.camera.bottom = -50;
         scene.add(dirLight);
 
-        // --- 3. ÇEVRE (Yol, Çimen, Ağaçlar) ---
+        // --- ÇEVRE ---
         const grassGeo = new THREE.PlaneGeometry(200, 400);
         const grassMat = new THREE.MeshStandardMaterial({ color: 0x4CAF50 });
         const grass = new THREE.Mesh(grassGeo, grassMat);
@@ -162,7 +194,7 @@
 
         const roadWidth = 12;
         const roadGeo = new THREE.PlaneGeometry(roadWidth, 400);
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.8 }); // Yol biraz daha koyu ve mat
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.8 }); 
         const road = new THREE.Mesh(roadGeo, roadMat);
         road.rotation.x = -Math.PI / 2;
         road.position.y = 0.01; 
@@ -216,32 +248,29 @@
             scene.add(tree);
             trees.push(tree);
         }
-
         for (let z = -150; z < 20; z += 15) {
             if (Math.random() > 0.2) spawnTree(z); 
         }
 
-        // --- YENİ: HIZ EFEKTİ (PARTICLES) ---
         const particleCount = 150;
         const particlesGeo = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         for(let i=0; i < particleCount * 3; i+=3) {
-            positions[i] = (Math.random() - 0.5) * 30; // X
-            positions[i+1] = Math.random() * 10;       // Y
-            positions[i+2] = -Math.random() * 150;     // Z
+            positions[i] = (Math.random() - 0.5) * 30; 
+            positions[i+1] = Math.random() * 10;       
+            positions[i+2] = -Math.random() * 150;     
         }
         particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        // İnce uzun beyaz çizgiler
         const particleMat = new THREE.PointsMaterial({color: 0xffffff, size: 0.1, transparent: true, opacity: 0.6});
         const speedParticles = new THREE.Points(particlesGeo, particleMat);
         scene.add(speedParticles);
 
+        // --- OYUNCU ARABASI MATERYALLERİ (Fren için) ---
+        let playerTaillightMat;
 
-        // --- 4. ARAÇ OLUŞTURMA ---
         function createCar(colorStr, isPlayer = false) {
             const carGroup = new THREE.Group();
             
-            // Kasa
             const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 4);
             const bodyMat = new THREE.MeshStandardMaterial({ color: colorStr, metalness: 0.2, roughness: 0.5 });
             const body = new THREE.Mesh(bodyGeo, bodyMat);
@@ -250,7 +279,6 @@
             body.receiveShadow = true;
             carGroup.add(body);
 
-            // Kabin
             const cabinGeo = new THREE.BoxGeometry(1.3, 0.5, 1.8);
             const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
             const cabin = new THREE.Mesh(cabinGeo, cabinMat);
@@ -258,7 +286,6 @@
             cabin.castShadow = true;
             carGroup.add(cabin);
 
-            // Farlar & Stoplar
             const headlightGeo = new THREE.BoxGeometry(0.3, 0.2, 0.1);
             const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
             const hl1 = new THREE.Mesh(headlightGeo, headlightMat);
@@ -267,7 +294,10 @@
             hl2.position.set(0.6, 0.5, -2.01);
             carGroup.add(hl1, hl2);
 
-            const taillightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            // Dinamik Fren Lambaları
+            const taillightMat = new THREE.MeshBasicMaterial({ color: 0x880000 }); // Varsayılan koyu kırmızı
+            if(isPlayer) playerTaillightMat = taillightMat; 
+            
             const tl1 = new THREE.Mesh(headlightGeo, taillightMat);
             tl1.position.set(-0.6, 0.5, 2.01);
             const tl2 = new THREE.Mesh(headlightGeo, taillightMat);
@@ -314,10 +344,9 @@
             return carGroup;
         }
 
-        // --- YENİ: ALTIN (COIN) OLUŞTURMA ---
         const coins = [];
         const coinGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16);
-        coinGeo.rotateX(Math.PI / 2); // Dik dursun
+        coinGeo.rotateX(Math.PI / 2); 
         const coinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
 
         function spawnCoin(laneX, startZ) {
@@ -328,7 +357,7 @@
             coins.push(coin);
         }
 
-        // --- 5. OYUN DEĞİŞKENLERİ ---
+        // --- OYUN DEĞİŞKENLERİ ---
         const playerCar = createCar(0xff3333, true); 
         scene.add(playerCar);
 
@@ -336,31 +365,32 @@
         let currentLane = 1; 
         playerCar.position.set(lanes[currentLane], 0, 0);
 
-        let speed = 1.0; 
+        // DİNAMİK HIZ DEĞİŞKENLERİ
+        let baseSpeed = 1.0;     // Oyun ilerledikçe artan taban hız
+        let currentSpeed = 1.0;  // Oyuncunun manuel kontrolündeki anlık hız
+        let isAccelerating = false;
+        let isBraking = false;
+
         let score = 0;
         let isGameOver = false;
         let isFirstPerson = false; 
         const trafficCars = [];
 
-        // --- 6. RNG TRAFİK VE ALTIN YÖNETİMİ ---
         function spawnTrafficCar() {
             const colors = [0x3344ff, 0x22cc22, 0xffaa00, 0x888888, 0xffffff, 0x550055];
             const randomColor = colors[Math.floor(Math.random() * colors.length)];
             const tCar = createCar(randomColor, false);
             
             const randomLane = Math.floor(Math.random() * 3);
-            const startZ = -120 - Math.random() * 20; // Hafif rastgelelik
+            const startZ = -120 - Math.random() * 20; 
             tCar.position.set(lanes[randomLane], 0, startZ); 
             tCar.rotation.y = Math.PI; 
             scene.add(tCar);
             trafficCars.push({ mesh: tCar, lane: randomLane });
 
-            // Trafik aracıyla beraber %50 ihtimalle BOŞ olan bir şeride altın koy!
             if (Math.random() > 0.5) {
                 let coinLane;
-                do {
-                    coinLane = Math.floor(Math.random() * 3);
-                } while (coinLane === randomLane); // Arabanın altına denk gelmesin
+                do { coinLane = Math.floor(Math.random() * 3); } while (coinLane === randomLane); 
                 spawnCoin(lanes[coinLane], startZ + (Math.random() * 10 - 5));
             }
         }
@@ -371,49 +401,83 @@
         function updateScoreDisplay() {
             const scoreEl = document.getElementById('score');
             scoreEl.innerText = "Skor: " + score;
-            // Altın alınca efekti tetikle
             scoreEl.classList.remove('score-bump');
-            void scoreEl.offsetWidth; // DOM reflow
+            void scoreEl.offsetWidth; 
             scoreEl.classList.add('score-bump');
         }
 
-        // --- 7. KONTROLLER ---
+        // --- KONTROLLER ---
         window.addEventListener('keydown', (e) => {
             if (isGameOver) return;
             if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                 if (currentLane > 0) currentLane--;
             } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
                 if (currentLane < 2) currentLane++;
+            } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                isAccelerating = true;
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                isBraking = true;
             } else if (e.key === 'v' || e.key === 'V') {
                 isFirstPerson = !isFirstPerson; 
             }
         });
 
-        // --- 8. OYUN DÖNGÜSÜ ---
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                isAccelerating = false;
+            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                isBraking = false;
+            }
+        });
+
+        // --- OYUN DÖNGÜSÜ ---
         function animate() {
             if (isGameOver) return;
             requestAnimationFrame(animate);
 
+            // --- HIZ VE FREN LİGHT MANTIĞI ---
+            if (isAccelerating) {
+                currentSpeed += 0.05;
+                if (currentSpeed > baseSpeed * 2.2) currentSpeed = baseSpeed * 2.2; // Maksimum Boost
+                baseFov = 75; // Hızlanınca kamera açısı genişler (Hız hissi)
+            } else if (isBraking) {
+                currentSpeed -= 0.1;
+                if (currentSpeed < baseSpeed * 0.4) currentSpeed = baseSpeed * 0.4; // Maksimum Yavaşlama
+                baseFov = 50; // Frenleyince kamera daralır
+                playerTaillightMat.color.setHex(0xff0000); // Fren lambaları parlar
+            } else {
+                // Tuşa basılmıyorsa yavaşça baz hıza dön
+                currentSpeed += (baseSpeed - currentSpeed) * 0.05;
+                baseFov = 60;
+                playerTaillightMat.color.setHex(0x880000); // Normal stop lambası
+            }
+
+            // Hız Göstergesini Güncelle (UI)
+            let displaySpeed = Math.floor(currentSpeed * 80); // Görsel hız katsayısı
+            document.getElementById('speed-val').innerText = displaySpeed;
+
+            // Kamera FOV Animasyonu
+            camera.fov += (baseFov - camera.fov) * 0.1;
+            camera.updateProjectionMatrix();
+
             // --- FİZİK VE SÜRÜŞ HİSSİYATI ---
             const targetX = lanes[currentLane];
             const diffX = targetX - playerCar.position.x;
-            playerCar.position.x += diffX * 0.15; // Yumuşak geçiş
+            playerCar.position.x += diffX * 0.15; 
             
-            // Araba dönerken o yöne doğru yatsın (Tilt/Roll) ve burnunu çevirsin (Yaw)
-            // diffX pozitifse sağa dönüyor demektir.
             playerCar.rotation.z = -diffX * 0.05; 
             playerCar.rotation.y = -diffX * 0.03;
 
             // Şeritler
             lines.forEach(line => {
-                line.position.z += speed;
+                line.position.z += currentSpeed;
                 if (line.position.z > 10) line.position.z -= 200;
             });
 
-            // Hız partikülleri (Rüzgar efekti)
+            // Hız partikülleri
             const positionsArr = speedParticles.geometry.attributes.position.array;
             for(let i=2; i < particleCount * 3; i+=3) {
-                positionsArr[i] += speed * 2.5; // Arabadan çok daha hızlı akarlar
+                positionsArr[i] += currentSpeed * 2.5; 
                 if(positionsArr[i] > 10) positionsArr[i] -= 150;
             }
             speedParticles.geometry.attributes.position.needsUpdate = true;
@@ -421,27 +485,26 @@
             // Ağaçlar
             for (let i = trees.length - 1; i >= 0; i--) {
                 let tree = trees[i];
-                tree.position.z += speed;
+                tree.position.z += currentSpeed;
                 if (tree.position.z > 20) {
                     scene.remove(tree);
                     trees.splice(i, 1);
                 }
             }
-            if (Math.random() < 0.08 * speed) spawnTree(-150);
+            if (Math.random() < 0.08 * currentSpeed) spawnTree(-150);
 
-            // Altınlar (Döndür ve Topla)
+            // Altınlar
             for (let i = coins.length - 1; i >= 0; i--) {
                 let coin = coins[i];
-                coin.rotation.z += 0.1; // Kendi etrafında dönsün
-                coin.position.z += speed;
+                coin.rotation.z += 0.1; 
+                coin.position.z += currentSpeed;
 
-                // Altın Toplama Kontrolü
                 const distanceZ = Math.abs(playerCar.position.z - coin.position.z);
                 const distanceX = Math.abs(playerCar.position.x - coin.position.x);
                 if (distanceZ < 2.5 && distanceX < 1.5) {
                     scene.remove(coin);
                     coins.splice(i, 1);
-                    score += 50; // BONUS!
+                    score += 50; 
                     updateScoreDisplay();
                 } else if (coin.position.z > 20) {
                     scene.remove(coin);
@@ -449,10 +512,11 @@
                 }
             }
 
-            // Trafik
+            // Trafik Araçları
             for (let i = trafficCars.length - 1; i >= 0; i--) {
                 let tCar = trafficCars[i].mesh;
-                tCar.position.z += speed * 0.6; 
+                // Diğer araçlar da kendi hızlarında gider, ancak bizim relative hızımıza göre üstümüze gelirler
+                tCar.position.z += currentSpeed * 0.6; 
 
                 // Kaza Kontrolü
                 const distanceZ = Math.abs(playerCar.position.z - tCar.position.z);
@@ -460,10 +524,7 @@
                 
                 if (distanceZ < 3.5 && distanceX < 1.5) {
                     isGameOver = true;
-                    // High Score Kaydetme
-                    if (score > bestScore) {
-                        localStorage.setItem('endlessHighScore', score);
-                    }
+                    if (score > bestScore) localStorage.setItem('endlessHighScore', score);
                     document.getElementById('gameover-score').innerHTML = `Final Skor: ${score}<br>${score > bestScore ? '🎉 YENİ REKOR! 🎉' : ''}`;
                     document.getElementById('gameover').style.display = 'block';
                 }
@@ -473,12 +534,14 @@
                     trafficCars.splice(i, 1);
                     score += 10;
                     updateScoreDisplay();
-                    speed += 0.012; // Her geçtiğin araçta biraz daha hızlan
+                    baseSpeed += 0.015; // Araç geçtikçe oyunun TABAN HIZI artar (zorlaşır)
                 }
             }
 
             spawnTimer++;
-            if (spawnTimer > (90 - speed * 10)) { 
+            // Dinamik spawn süresi (Hızlıysan daha çok araç çıkar)
+            let spawnLimit = Math.max(20, 90 - currentSpeed * 12);
+            if (spawnTimer > spawnLimit) { 
                 spawnTrafficCar();
                 spawnTimer = 0;
             }
@@ -490,8 +553,8 @@
             } else {
                 const targetCamX = playerCar.position.x;
                 camera.position.x += (targetCamX - camera.position.x) * 0.1;
-                // Hızlandıkça kamera hafifçe geriye gitsin (Hız hissi)
-                const targetCamZ = playerCar.position.z + 10 + (speed * 1.5);
+                // Hızlandıkça kamera geriye yaslansın (Aksiyona odaklanma)
+                const targetCamZ = playerCar.position.z + 10 + (currentSpeed * 1.2);
                 camera.position.z += (targetCamZ - camera.position.z) * 0.1;
                 camera.position.y = 4;
                 camera.lookAt(playerCar.position.x, 0, playerCar.position.z - 20);
