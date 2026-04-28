@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Endless Highway - Ultimate Arcade</title>
+    <title>3D Endless Highway - Cyber Drive</title>
     <style>
         body {
             margin: 0;
@@ -41,7 +41,6 @@
             opacity: 0.8;
             margin-bottom: 10px;
         }
-        /* YENİ: 2X BONUS GÖSTERGESİ */
         #multiplier {
             display: none;
             color: #ff5500;
@@ -185,7 +184,7 @@
         document.body.appendChild(renderer.domElement);
 
         // --- AYDINLATMA ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
 
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -211,7 +210,7 @@
 
         const roadWidth = 12;
         const roadGeo = new THREE.PlaneGeometry(roadWidth, 400);
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.8 }); 
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, roughness: 0.9 }); 
         const road = new THREE.Mesh(roadGeo, roadMat);
         road.rotation.x = -Math.PI / 2;
         road.position.y = 0.01; 
@@ -221,7 +220,6 @@
         const lines = [];
         const lineGeo = new THREE.PlaneGeometry(0.2, 3);
         const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        
         for (let i = 0; i < 20; i++) {
             let line1 = new THREE.Mesh(lineGeo, lineMat);
             line1.rotation.x = -Math.PI / 2;
@@ -282,96 +280,148 @@
         const speedParticles = new THREE.Points(particlesGeo, particleMat);
         scene.add(speedParticles);
 
-        // --- OYUNCU ARABASI VE EGZOZ (NITRO) ---
+        // --- GELİŞMİŞ ARAÇ TASARIMI (Wedge Shape & Direksiyon) ---
         let playerTaillightMat;
         let playerExhausts = [];
+        let steeringWheel; // İç kamera için direksiyon referansı
 
         function createCar(colorStr, isPlayer = false) {
             const carGroup = new THREE.Group();
-            
-            const bodyGeo = new THREE.BoxGeometry(1.8, 0.6, 4);
-            const bodyMat = new THREE.MeshStandardMaterial({ color: colorStr, metalness: 0.2, roughness: 0.5 });
-            const body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 0.5;
+            const carMat = new THREE.MeshStandardMaterial({ color: colorStr, metalness: 0.4, roughness: 0.3 });
+            const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x050505, metalness: 0.9, roughness: 0.1 });
+
+            // 1. Aerodinamik Gövde (Alt Kısım)
+            const bodyGeo = new THREE.BoxGeometry(1.9, 0.5, 4.2);
+            const body = new THREE.Mesh(bodyGeo, carMat);
+            body.position.y = 0.45;
             body.castShadow = true;
             body.receiveShadow = true;
             carGroup.add(body);
 
-            const cabinGeo = new THREE.BoxGeometry(1.3, 0.5, 1.8);
-            const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
-            const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-            cabin.position.set(0, 1.05, -0.2);
+            // 2. Eğimli Kaput (Ön tarafı sivriltmek için)
+            const hoodGeo = new THREE.CylinderGeometry(0, 1.9/Math.sqrt(2), 1.2, 4);
+            const hood = new THREE.Mesh(hoodGeo, carMat);
+            hood.rotation.y = Math.PI / 4; // Kare prizmayı elmas şekline çevirip eğiyoruz
+            hood.rotation.x = Math.PI / 2;
+            hood.scale.set(1, 0.4, 1);
+            hood.position.set(0, 0.45, -2.1);
+            hood.castShadow = true;
+            carGroup.add(hood);
+
+            // 3. Spor Kabin (Camlar) - Tavanı dar ve eğimli
+            const cabinGeo = new THREE.CylinderGeometry(0.7, 0.9, 2.2, 4);
+            const cabin = new THREE.Mesh(cabinGeo, glassMat);
+            cabin.rotation.y = Math.PI / 4;
+            cabin.scale.set(1, 0.6, 1);
+            cabin.position.set(0, 1.0, 0);
             cabin.castShadow = true;
             carGroup.add(cabin);
 
-            const headlightGeo = new THREE.BoxGeometry(0.3, 0.2, 0.1);
+            // 4. Yan Etekler (Side Skirts - Görsel Detay)
+            const skirtGeo = new THREE.BoxGeometry(2.0, 0.1, 2.5);
+            const skirt = new THREE.Mesh(skirtGeo, blackMat);
+            skirt.position.set(0, 0.25, 0);
+            carGroup.add(skirt);
+
+            // Farlar (İnce uzun LED stili)
+            const headlightGeo = new THREE.BoxGeometry(0.5, 0.1, 0.1);
             const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
             const hl1 = new THREE.Mesh(headlightGeo, headlightMat);
-            hl1.position.set(-0.6, 0.5, -2.01);
+            hl1.position.set(-0.6, 0.5, -2.6);
             const hl2 = new THREE.Mesh(headlightGeo, headlightMat);
-            hl2.position.set(0.6, 0.5, -2.01);
+            hl2.position.set(0.6, 0.5, -2.6);
             carGroup.add(hl1, hl2);
 
+            // Stop Lambaları (İnce LED stili)
             const taillightMat = new THREE.MeshBasicMaterial({ color: 0x880000 }); 
             if(isPlayer) playerTaillightMat = taillightMat; 
-            
             const tl1 = new THREE.Mesh(headlightGeo, taillightMat);
-            tl1.position.set(-0.6, 0.5, 2.01);
+            tl1.position.set(-0.6, 0.5, 2.11);
             const tl2 = new THREE.Mesh(headlightGeo, taillightMat);
-            tl2.position.set(0.6, 0.5, 2.01);
+            tl2.position.set(0.6, 0.5, 2.11);
             carGroup.add(tl1, tl2);
 
             if (isPlayer) {
-                const spoilerGeo = new THREE.BoxGeometry(1.6, 0.1, 0.3);
-                const spoilerMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-                const spoiler = new THREE.Mesh(spoilerGeo, spoilerMat);
-                spoiler.position.set(0, 0.9, 1.8);
-                spoiler.castShadow = true;
+                // Büyük Spoiler (Rüzgarlık)
+                const spoilerWingGeo = new THREE.BoxGeometry(1.8, 0.1, 0.4);
+                const spoilerWing = new THREE.Mesh(spoilerWingGeo, blackMat);
+                spoilerWing.position.set(0, 1.1, 1.9);
+                spoilerWing.rotation.x = -0.1; // Hafif açılı
+                spoilerWing.castShadow = true;
                 
-                const supportGeo = new THREE.BoxGeometry(0.1, 0.2, 0.2);
-                const s1 = new THREE.Mesh(supportGeo, spoilerMat);
-                s1.position.set(-0.5, 0.8, 1.8);
-                const s2 = new THREE.Mesh(supportGeo, spoilerMat);
-                s2.position.set(0.5, 0.8, 1.8);
-                carGroup.add(spoiler, s1, s2);
+                const spoilerLegGeo = new THREE.BoxGeometry(0.1, 0.4, 0.2);
+                const sl1 = new THREE.Mesh(spoilerLegGeo, blackMat);
+                sl1.position.set(-0.6, 0.9, 1.9);
+                const sl2 = new THREE.Mesh(spoilerLegGeo, blackMat);
+                sl2.position.set(0.6, 0.9, 1.9);
+                carGroup.add(spoilerWing, sl1, sl2);
 
-                // YENİ: Nitro Egzoz Alevleri
-                const exhaustGeo = new THREE.ConeGeometry(0.15, 0.6, 8);
+                // Nitro Egzoz Alevleri
+                const exhaustGeo = new THREE.ConeGeometry(0.15, 0.8, 8);
                 exhaustGeo.rotateX(Math.PI / 2);
                 const exhaustMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.9 });
                 
                 const ex1 = new THREE.Mesh(exhaustGeo, exhaustMat);
-                ex1.position.set(-0.5, 0.3, 2.3);
+                ex1.position.set(-0.5, 0.3, 2.4);
                 ex1.visible = false;
                 
                 const ex2 = new THREE.Mesh(exhaustGeo, exhaustMat);
-                ex2.position.set(0.5, 0.3, 2.3);
+                ex2.position.set(0.5, 0.3, 2.4);
                 ex2.visible = false;
                 
                 carGroup.add(ex1, ex2);
                 playerExhausts.push(ex1, ex2);
+
+                // YENİ: İÇ KAMERA İÇİN DİREKSİYON (Sadece Oyuncuda)
+                const steeringGeo = new THREE.TorusGeometry(0.2, 0.03, 8, 24);
+                const steeringMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+                steeringWheel = new THREE.Mesh(steeringGeo, steeringMat);
+                // Direksiyonu şoför mahalline yerleştir
+                steeringWheel.position.set(-0.35, 1.0, -0.2);
+                steeringWheel.rotation.x = -Math.PI / 6; // Hafif yukarı açılı
+                
+                // Direksiyon Göbeği
+                const hubGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16);
+                const hub = new THREE.Mesh(hubGeo, steeringMat);
+                hub.rotation.x = Math.PI / 2;
+                steeringWheel.add(hub);
+                
+                // Direksiyon Kolları
+                const spokeGeo = new THREE.BoxGeometry(0.4, 0.02, 0.02);
+                const spoke = new THREE.Mesh(spokeGeo, steeringMat);
+                steeringWheel.add(spoke);
+
+                carGroup.add(steeringWheel);
             }
 
-            const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 16);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+            // Spor Jantlar ve Tekerlekler
+            const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.25, 16);
+            const tireMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+            const rimGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.26, 8); // İç Jant
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.8 });
+
             const wheelPositions = [
-                [-1, 0.35, 1.2], [1, 0.35, 1.2],   
-                [-1, 0.35, -1.2], [1, 0.35, -1.2]  
+                [-1.0, 0.4, 1.3], [1.0, 0.4, 1.3],   
+                [-1.0, 0.4, -1.3], [1.0, 0.4, -1.3]  
             ];
             wheelPositions.forEach(pos => {
-                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                const wheel = new THREE.Mesh(wheelGeo, tireMat);
+                const rim = new THREE.Mesh(rimGeo, rimMat);
+                wheel.add(rim); // Jantı tekere ekle
                 wheel.rotation.z = Math.PI / 2;
                 wheel.position.set(...pos);
                 wheel.castShadow = true;
                 carGroup.add(wheel);
             });
 
+            // Gerçek Aydınlatma
             if (isPlayer) {
-                const headLight1 = new THREE.PointLight(0xffffff, 1, 20);
-                headLight1.position.set(-0.6, 0.5, -2.1);
+                const headLight1 = new THREE.PointLight(0xffffff, 1.5, 30);
+                headLight1.position.set(-0.6, 0.5, -2.7);
                 carGroup.add(headLight1);
-                const headLight2 = new THREE.PointLight(0xffffff, 1, 20);
-                headLight2.position.set(0.6, 0.5, -2.1);
+                const headLight2 = new THREE.PointLight(0xffffff, 1.5, 30);
+                headLight2.position.set(0.6, 0.5, -2.7);
                 carGroup.add(headLight2);
             }
             return carGroup;
@@ -398,10 +448,12 @@
         let currentLane = 1; 
         playerCar.position.set(lanes[currentLane], 0, 0);
 
-        // DAHA GERÇEKÇİ HIZ DİNAMİKLERİ
+        // MANTIKLI HIZ DİNAMİKLERİ
         let baseSpeed = 1.0;     // Minimum 60km/h
         let currentSpeed = 1.0;  
-        let maxSpeed = 3.35;     // Tam 200 km/h limitine denk gelir (3.35 * 60 = ~200)
+        let maxSpeed = 3.35;     // 200 km/h Limiti
+        // İvme katsayısı (Hızlandıkça ivme düşer, mantıklı hızlanma sağlar)
+        let accelerationRate = 0.015; 
 
         let isAccelerating = false;
         let isBraking = false;
@@ -470,64 +522,67 @@
             if (isGameOver) return;
             requestAnimationFrame(animate);
 
-            // --- GELİŞMİŞ FİZİK VE FREN MANTIĞI ---
+            // --- GELİŞMİŞ FİZİK VE HIZLANMA ---
             if (isAccelerating) {
-                currentSpeed += 0.01; // Pürüzsüz hızlanma
-                if (currentSpeed > maxSpeed) currentSpeed = maxSpeed; // 200 KM/H Limit
-                baseFov = 60 + (currentSpeed - 1.0) * 8; // Hıza duyarlı genişleyen kamera
+                // Hız arttıkça ivme düşer (Logaritmik hissiyat)
+                let currentAccel = accelerationRate * (1 - (currentSpeed / (maxSpeed * 1.2)));
+                currentSpeed += currentAccel;
                 
-                // Nitro Alevleri
+                if (currentSpeed > maxSpeed) currentSpeed = maxSpeed; 
+                baseFov = 60 + (currentSpeed - 1.0) * 8; 
+                
                 playerExhausts.forEach(ex => {
                     ex.visible = true;
-                    ex.scale.z = 1 + Math.random() * 0.8; // Alev titremesi
+                    ex.scale.z = 1 + Math.random() * 0.8; 
                     ex.material.color.setHex(Math.random() > 0.5 ? 0xff5500 : 0xffaa00);
                 });
             } else if (isBraking) {
-                currentSpeed -= 0.03; // Güçlü fren
+                currentSpeed -= 0.05; // Güçlü fren
                 if (currentSpeed < baseSpeed * 0.5) currentSpeed = baseSpeed * 0.5; 
                 baseFov = 50; 
                 playerTaillightMat.color.setHex(0xff0000); 
                 playerExhausts.forEach(ex => ex.visible = false);
             } else {
-                // Gazdan çekilince süzülme (Coasting)
                 currentSpeed += (baseSpeed - currentSpeed) * 0.02;
                 baseFov = 60;
                 playerTaillightMat.color.setHex(0x880000); 
                 playerExhausts.forEach(ex => ex.visible = false);
             }
 
-            // Hız Göstergesi ve 2X Bonus Çarpanı (150 km/h üzeri)
             let displaySpeed = Math.min(200, Math.floor(currentSpeed * 60));
             document.getElementById('speed-val').innerText = displaySpeed;
             
             let isSpeedBonus = displaySpeed > 150;
             document.getElementById('multiplier').style.display = isSpeedBonus ? 'block' : 'none';
 
-            // Kamera FOV Animasyonu
             camera.fov += (baseFov - camera.fov) * 0.1;
             camera.updateProjectionMatrix();
 
-            // Kamera Titremesi (High Speed Shake)
             let shakeX = 0, shakeY = 0;
             if (isSpeedBonus && !isFirstPerson) {
                 shakeX = (Math.random() - 0.5) * 0.1;
                 shakeY = (Math.random() - 0.5) * 0.1;
             }
 
-            // Sürüş Hissiyatı (Şerit Değiştirme)
+            // Sürüş Hissiyatı
             const targetX = lanes[currentLane];
             const diffX = targetX - playerCar.position.x;
             playerCar.position.x += diffX * 0.15; 
             playerCar.rotation.z = -diffX * 0.05; 
             playerCar.rotation.y = -diffX * 0.03;
 
-            // Şeritler
+            // YENİ: Direksiyon Animasyonu
+            if (steeringWheel) {
+                // Araba sağa/sola giderken direksiyon da o yöne döner
+                steeringWheel.rotation.z = -diffX * 0.5;
+            }
+
+            // Çevre akışı
             lines.forEach(line => {
                 line.position.z += currentSpeed;
                 if (line.position.z > 10) line.position.z -= 200;
             });
 
-            // Hız partikülleri
             const positionsArr = speedParticles.geometry.attributes.position.array;
             for(let i=2; i < particleCount * 3; i+=3) {
                 positionsArr[i] += currentSpeed * 2.5; 
@@ -535,7 +590,6 @@
             }
             speedParticles.geometry.attributes.position.needsUpdate = true;
 
-            // Ağaçlar
             for (let i = trees.length - 1; i >= 0; i--) {
                 let tree = trees[i];
                 tree.position.z += currentSpeed;
@@ -557,7 +611,7 @@
                 if (distanceZ < 2.5 && distanceX < 1.5) {
                     scene.remove(coin);
                     coins.splice(i, 1);
-                    score += isSpeedBonus ? 100 : 50; // 2X Hız Bonusu
+                    score += isSpeedBonus ? 100 : 50; 
                     updateScoreDisplay();
                 } else if (coin.position.z > 20) {
                     scene.remove(coin);
@@ -570,7 +624,6 @@
                 let tCar = trafficCars[i].mesh;
                 tCar.position.z += currentSpeed * 0.6; 
 
-                // Kaza Kontrolü
                 const distanceZ = Math.abs(playerCar.position.z - tCar.position.z);
                 const distanceX = Math.abs(playerCar.position.x - tCar.position.x);
                 
@@ -584,17 +637,17 @@
                 if (tCar.position.z > 20) {
                     scene.remove(tCar);
                     trafficCars.splice(i, 1);
-                    score += isSpeedBonus ? 20 : 10; // 2X Hız Bonusu
+                    score += isSpeedBonus ? 20 : 10; 
                     updateScoreDisplay();
                     
-                    if (baseSpeed < 2.0) { // Oyunun baz zorluğu çok absürt yerlere gitmesin
-                        baseSpeed += 0.005; 
+                    if (baseSpeed < 1.8) { 
+                        baseSpeed += 0.003; // Oyun yavaş yavaş zorlaşır
                     }
                 }
             }
 
             spawnTimer++;
-            let spawnLimit = Math.max(25, 90 - currentSpeed * 10);
+            let spawnLimit = Math.max(30, 90 - currentSpeed * 10);
             if (spawnTimer > spawnLimit) { 
                 spawnTrafficCar();
                 spawnTimer = 0;
@@ -602,8 +655,9 @@
 
             // KAMERA YÖNETİMİ
             if (isFirstPerson) {
-                camera.position.set(playerCar.position.x + shakeX, 1.2 + shakeY, playerCar.position.z - 0.5);
-                camera.lookAt(playerCar.position.x, 1.2, playerCar.position.z - 50);
+                // Kamerayı direksiyonun hemen arkasına (şoför göz hizasına) al
+                camera.position.set(playerCar.position.x - 0.35, 1.25 + shakeY, playerCar.position.z + 0.2);
+                camera.lookAt(playerCar.position.x - 0.35, 1.1, playerCar.position.z - 50);
             } else {
                 const targetCamX = playerCar.position.x;
                 camera.position.x += (targetCamX - camera.position.x) * 0.1;
@@ -612,7 +666,6 @@
                 camera.position.z += (targetCamZ - camera.position.z) * 0.1;
                 camera.position.y = 4;
                 
-                // Shake efekti ekle
                 camera.position.x += shakeX;
                 camera.position.y += shakeY;
                 
