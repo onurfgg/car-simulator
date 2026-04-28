@@ -22,11 +22,12 @@
             color: white;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
             pointer-events: none;
+            z-index: 10;
         }
         #score-container {
             display: flex;
             flex-direction: column;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         #score {
             font-size: 38px;
@@ -38,6 +39,20 @@
             font-weight: 600;
             color: #fff;
             opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        /* YENİ: 2X BONUS GÖSTERGESİ */
+        #multiplier {
+            display: none;
+            color: #ff5500;
+            font-size: 22px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            animation: pulse 0.5s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); text-shadow: 0 0 10px #ff5500; }
+            to { transform: scale(1.1); text-shadow: 0 0 20px #ffea00; }
         }
         #instructions {
             font-size: 14px;
@@ -48,7 +63,6 @@
             border: 1px solid rgba(255,255,255,0.2);
             line-height: 1.5;
         }
-        /* YENİ: HIZ GÖSTERGESİ */
         #speedometer {
             position: absolute;
             bottom: 30px;
@@ -58,6 +72,7 @@
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 2px 2px 4px rgba(0,0,0,0.9);
             font-family: monospace;
             pointer-events: none;
+            z-index: 10;
         }
         #speed-val {
             font-size: 64px;
@@ -86,6 +101,7 @@
             display: none;
             text-align: center;
             backdrop-filter: blur(10px);
+            z-index: 20;
         }
         #gameover-score {
             color: white;
@@ -126,6 +142,7 @@
         <div id="score-container">
             <div id="score">Skor: 0</div>
             <div id="highscore">En Yüksek: 0</div>
+            <div id="multiplier">🔥 2X HIZ BONUSU!</div>
         </div>
         <div id="instructions">
             <b>KONTROLLER:</b><br>
@@ -138,7 +155,7 @@
     </div>
     
     <div id="speedometer">
-        <div id="speed-val">100</div>
+        <div id="speed-val">60</div>
         <div id="speed-unit">KM/H</div>
     </div>
 
@@ -159,7 +176,7 @@
         scene.fog = new THREE.Fog(0x87CEEB, 30, 150); 
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
-        let baseFov = 60; // Dinamik FOV için temel değer
+        let baseFov = 60; 
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -265,8 +282,9 @@
         const speedParticles = new THREE.Points(particlesGeo, particleMat);
         scene.add(speedParticles);
 
-        // --- OYUNCU ARABASI MATERYALLERİ (Fren için) ---
+        // --- OYUNCU ARABASI VE EGZOZ (NITRO) ---
         let playerTaillightMat;
+        let playerExhausts = [];
 
         function createCar(colorStr, isPlayer = false) {
             const carGroup = new THREE.Group();
@@ -294,8 +312,7 @@
             hl2.position.set(0.6, 0.5, -2.01);
             carGroup.add(hl1, hl2);
 
-            // Dinamik Fren Lambaları
-            const taillightMat = new THREE.MeshBasicMaterial({ color: 0x880000 }); // Varsayılan koyu kırmızı
+            const taillightMat = new THREE.MeshBasicMaterial({ color: 0x880000 }); 
             if(isPlayer) playerTaillightMat = taillightMat; 
             
             const tl1 = new THREE.Mesh(headlightGeo, taillightMat);
@@ -317,6 +334,22 @@
                 const s2 = new THREE.Mesh(supportGeo, spoilerMat);
                 s2.position.set(0.5, 0.8, 1.8);
                 carGroup.add(spoiler, s1, s2);
+
+                // YENİ: Nitro Egzoz Alevleri
+                const exhaustGeo = new THREE.ConeGeometry(0.15, 0.6, 8);
+                exhaustGeo.rotateX(Math.PI / 2);
+                const exhaustMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.9 });
+                
+                const ex1 = new THREE.Mesh(exhaustGeo, exhaustMat);
+                ex1.position.set(-0.5, 0.3, 2.3);
+                ex1.visible = false;
+                
+                const ex2 = new THREE.Mesh(exhaustGeo, exhaustMat);
+                ex2.position.set(0.5, 0.3, 2.3);
+                ex2.visible = false;
+                
+                carGroup.add(ex1, ex2);
+                playerExhausts.push(ex1, ex2);
             }
 
             const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 16);
@@ -365,9 +398,11 @@
         let currentLane = 1; 
         playerCar.position.set(lanes[currentLane], 0, 0);
 
-        // DİNAMİK HIZ DEĞİŞKENLERİ
-        let baseSpeed = 1.0;     // Oyun ilerledikçe artan taban hız
-        let currentSpeed = 1.0;  // Oyuncunun manuel kontrolündeki anlık hız
+        // DAHA GERÇEKÇİ HIZ DİNAMİKLERİ
+        let baseSpeed = 1.0;     // Minimum 60km/h
+        let currentSpeed = 1.0;  
+        let maxSpeed = 3.35;     // Tam 200 km/h limitine denk gelir (3.35 * 60 = ~200)
+
         let isAccelerating = false;
         let isBraking = false;
 
@@ -435,36 +470,54 @@
             if (isGameOver) return;
             requestAnimationFrame(animate);
 
-            // --- HIZ VE FREN LİGHT MANTIĞI ---
+            // --- GELİŞMİŞ FİZİK VE FREN MANTIĞI ---
             if (isAccelerating) {
-                currentSpeed += 0.05;
-                if (currentSpeed > baseSpeed * 2.2) currentSpeed = baseSpeed * 2.2; // Maksimum Boost
-                baseFov = 75; // Hızlanınca kamera açısı genişler (Hız hissi)
+                currentSpeed += 0.01; // Pürüzsüz hızlanma
+                if (currentSpeed > maxSpeed) currentSpeed = maxSpeed; // 200 KM/H Limit
+                baseFov = 60 + (currentSpeed - 1.0) * 8; // Hıza duyarlı genişleyen kamera
+                
+                // Nitro Alevleri
+                playerExhausts.forEach(ex => {
+                    ex.visible = true;
+                    ex.scale.z = 1 + Math.random() * 0.8; // Alev titremesi
+                    ex.material.color.setHex(Math.random() > 0.5 ? 0xff5500 : 0xffaa00);
+                });
             } else if (isBraking) {
-                currentSpeed -= 0.1;
-                if (currentSpeed < baseSpeed * 0.4) currentSpeed = baseSpeed * 0.4; // Maksimum Yavaşlama
-                baseFov = 50; // Frenleyince kamera daralır
-                playerTaillightMat.color.setHex(0xff0000); // Fren lambaları parlar
+                currentSpeed -= 0.03; // Güçlü fren
+                if (currentSpeed < baseSpeed * 0.5) currentSpeed = baseSpeed * 0.5; 
+                baseFov = 50; 
+                playerTaillightMat.color.setHex(0xff0000); 
+                playerExhausts.forEach(ex => ex.visible = false);
             } else {
-                // Tuşa basılmıyorsa yavaşça baz hıza dön
-                currentSpeed += (baseSpeed - currentSpeed) * 0.05;
+                // Gazdan çekilince süzülme (Coasting)
+                currentSpeed += (baseSpeed - currentSpeed) * 0.02;
                 baseFov = 60;
-                playerTaillightMat.color.setHex(0x880000); // Normal stop lambası
+                playerTaillightMat.color.setHex(0x880000); 
+                playerExhausts.forEach(ex => ex.visible = false);
             }
 
-            // Hız Göstergesini Güncelle (UI)
-            let displaySpeed = Math.floor(currentSpeed * 80); // Görsel hız katsayısı
+            // Hız Göstergesi ve 2X Bonus Çarpanı (150 km/h üzeri)
+            let displaySpeed = Math.min(200, Math.floor(currentSpeed * 60));
             document.getElementById('speed-val').innerText = displaySpeed;
+            
+            let isSpeedBonus = displaySpeed > 150;
+            document.getElementById('multiplier').style.display = isSpeedBonus ? 'block' : 'none';
 
             // Kamera FOV Animasyonu
             camera.fov += (baseFov - camera.fov) * 0.1;
             camera.updateProjectionMatrix();
 
-            // --- FİZİK VE SÜRÜŞ HİSSİYATI ---
+            // Kamera Titremesi (High Speed Shake)
+            let shakeX = 0, shakeY = 0;
+            if (isSpeedBonus && !isFirstPerson) {
+                shakeX = (Math.random() - 0.5) * 0.1;
+                shakeY = (Math.random() - 0.5) * 0.1;
+            }
+
+            // Sürüş Hissiyatı (Şerit Değiştirme)
             const targetX = lanes[currentLane];
             const diffX = targetX - playerCar.position.x;
             playerCar.position.x += diffX * 0.15; 
-            
             playerCar.rotation.z = -diffX * 0.05; 
             playerCar.rotation.y = -diffX * 0.03;
 
@@ -504,7 +557,7 @@
                 if (distanceZ < 2.5 && distanceX < 1.5) {
                     scene.remove(coin);
                     coins.splice(i, 1);
-                    score += 50; 
+                    score += isSpeedBonus ? 100 : 50; // 2X Hız Bonusu
                     updateScoreDisplay();
                 } else if (coin.position.z > 20) {
                     scene.remove(coin);
@@ -515,7 +568,6 @@
             // Trafik Araçları
             for (let i = trafficCars.length - 1; i >= 0; i--) {
                 let tCar = trafficCars[i].mesh;
-                // Diğer araçlar da kendi hızlarında gider, ancak bizim relative hızımıza göre üstümüze gelirler
                 tCar.position.z += currentSpeed * 0.6; 
 
                 // Kaza Kontrolü
@@ -532,31 +584,38 @@
                 if (tCar.position.z > 20) {
                     scene.remove(tCar);
                     trafficCars.splice(i, 1);
-                    score += 10;
+                    score += isSpeedBonus ? 20 : 10; // 2X Hız Bonusu
                     updateScoreDisplay();
-                    baseSpeed += 0.015; // Araç geçtikçe oyunun TABAN HIZI artar (zorlaşır)
+                    
+                    if (baseSpeed < 2.0) { // Oyunun baz zorluğu çok absürt yerlere gitmesin
+                        baseSpeed += 0.005; 
+                    }
                 }
             }
 
             spawnTimer++;
-            // Dinamik spawn süresi (Hızlıysan daha çok araç çıkar)
-            let spawnLimit = Math.max(20, 90 - currentSpeed * 12);
+            let spawnLimit = Math.max(25, 90 - currentSpeed * 10);
             if (spawnTimer > spawnLimit) { 
                 spawnTrafficCar();
                 spawnTimer = 0;
             }
 
-            // KAMERA
+            // KAMERA YÖNETİMİ
             if (isFirstPerson) {
-                camera.position.set(playerCar.position.x, 1.2, playerCar.position.z - 0.5);
+                camera.position.set(playerCar.position.x + shakeX, 1.2 + shakeY, playerCar.position.z - 0.5);
                 camera.lookAt(playerCar.position.x, 1.2, playerCar.position.z - 50);
             } else {
                 const targetCamX = playerCar.position.x;
                 camera.position.x += (targetCamX - camera.position.x) * 0.1;
-                // Hızlandıkça kamera geriye yaslansın (Aksiyona odaklanma)
-                const targetCamZ = playerCar.position.z + 10 + (currentSpeed * 1.2);
+                
+                const targetCamZ = playerCar.position.z + 10 + (currentSpeed * 1.5);
                 camera.position.z += (targetCamZ - camera.position.z) * 0.1;
                 camera.position.y = 4;
+                
+                // Shake efekti ekle
+                camera.position.x += shakeX;
+                camera.position.y += shakeY;
+                
                 camera.lookAt(playerCar.position.x, 0, playerCar.position.z - 20);
             }
 
