@@ -344,8 +344,8 @@ canvas {
         <b>SYNTHWAVE KONTROLLERİ</b><br>
         ⬅️ / A : Sola Kır<br>
         ➡️ / D : Sağa Kır<br>
-        ⬆️ / W : Gaz Ver<br>
-        ⬇️ / S : Fren<br>
+        ⬆️ / W : Gaz (Akıcı İvme)<br>
+        ⬇️ / S : Yumuşak Fren<br>
         🚀 SPACE : Nitro<br>
         📷 V : Kamera Değiştir
     </div>
@@ -369,13 +369,11 @@ canvas {
      MOBILE CONTROLS
 ========================= -->
 <div id="mobile-controls">
-    <!-- Sol Taraftaki Yön Tuşları -->
     <div style="display:flex; gap: 12px; padding-bottom: 10px;">
         <div id="btn-left" class="mob-btn">◀</div>
         <div id="btn-right" class="mob-btn">▶</div>
     </div>
     
-    <!-- Sağ Taraftaki Pedallar -->
     <div style="display:flex; flex-direction:column; gap: 12px; align-items:flex-end;">
         <div id="btn-nitro" class="mob-btn mob-pedal" style="width: 100px; height: 50px; border-color: #ff00ff; color:#ff00ff; text-shadow:0 0 5px #ff00ff; font-size:18px;">NİTRO</div>
         <div style="display:flex; gap: 12px;">
@@ -426,7 +424,7 @@ document.body.appendChild(renderer.domElement);
 /* =========================================================
    LIGHTING & SYNTHWAVE SUN 
 ========================================================= */
-const ambientLight = new THREE.AmbientLight(0x5500aa, 1.2); // Parlaklık artırıldı
+const ambientLight = new THREE.AmbientLight(0x5500aa, 1.2); 
 scene.add(ambientLight);
 
 const sun = new THREE.DirectionalLight(0xff00ff, 1.2); 
@@ -455,7 +453,7 @@ for(let i=0; i<9; i++) {
 }
 
 /* =========================================================
-   ROAD & ENVIRONMENT
+   ROAD & NEON GRID (ÇAĞ ATLATAN YENİLİK)
 ========================================================= */
 const roadWidth = 28;
 const laneCount = 7;
@@ -479,6 +477,11 @@ road.rotation.x = -Math.PI / 2;
 road.position.y = .01;
 road.receiveShadow = true;
 scene.add(road);
+
+// HAREKETLİ NEON ZEMİN IZGARASI (GRID) - Çağ atlatan görsel
+const gridGeo = new THREE.GridHelper(800, 60, 0xff00ff, 0x5500aa);
+gridGeo.position.y = 0.015;
+scene.add(gridGeo);
 
 const leftEdge = new THREE.Mesh(new THREE.PlaneGeometry(.3, 800), new THREE.MeshBasicMaterial({ color: 0x00ffff }));
 leftEdge.rotation.x = -Math.PI / 2;
@@ -601,7 +604,7 @@ const speedParticles = new THREE.Points(particleGeo, particleMat);
 scene.add(speedParticles);
 
 /* =========================================================
-   CAR CREATOR (GÜÇLÜ VE PARLAK RENKLER EKLENDİ)
+   CAR CREATOR (BEMBEYAZ VE PARLAK)
 ========================================================= */
 let playerTaillightMat;
 let playerExhausts = [];
@@ -609,19 +612,16 @@ let steeringWheel;
 let playerFrontWheels = [];
 let playerHeadlights = [];
 
-function createCar(colorStr, isPlayer = false) {
+function createCar(colorHex, isPlayer = false) {
     const carGroup = new THREE.Group();
     
-    // YENİ: Trafik araçları artık kendi renklerinde hafifçe parlar (Emissive)
-    let emissiveColor = isPlayer ? 0x000000 : colorStr;
-    let emissiveIntensity = isPlayer ? 0 : 0.4;
-
+    // YENİ: Bütün arabalar BEMBEYAZ! Hafif emissive parlama ile gece parlıyorlar.
     const carMat = new THREE.MeshStandardMaterial({ 
-        color: colorStr, 
-        metalness: 0.7, 
-        roughness: 0.2,
-        emissive: emissiveColor,
-        emissiveIntensity: emissiveIntensity
+        color: colorHex, 
+        metalness: 0.8, 
+        roughness: 0.1,
+        emissive: 0x222222, // Hafif karanlıkta parlama
+        emissiveIntensity: 0.5
     });
     
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
@@ -653,6 +653,21 @@ function createCar(colorStr, isPlayer = false) {
 
     carGroup.add(cabinGroup);
     if (isPlayer) carGroup.userData.cabin = cabinGroup;
+
+    // YENİ ÇAĞ ATLATAN ÖZELLİK: OYUNCU ARABASININ ALTINDAKİ NEON IŞIKLANDIRMA (UNDERGLOW)
+    if (isPlayer) {
+        const underglowGeo = new THREE.PlaneGeometry(3.5, 6);
+        const underglowMat = new THREE.MeshBasicMaterial({ 
+            color: 0x00ffff, 
+            transparent: true, 
+            opacity: 0.5, 
+            blending: THREE.AdditiveBlending 
+        });
+        const underglow = new THREE.Mesh(underglowGeo, underglowMat);
+        underglow.rotation.x = -Math.PI / 2;
+        underglow.position.y = 0.05; // Yere tam yapışık neon parlama
+        carGroup.add(underglow);
+    }
 
     const neonMat = new THREE.MeshBasicMaterial({ color: isPlayer ? 0x00ffff : 0xff00ff });
     const neon = new THREE.Mesh(new THREE.BoxGeometry(2.12, .055, 3.8), neonMat);
@@ -709,20 +724,21 @@ function createCar(colorStr, isPlayer = false) {
     return carGroup;
 }
 
-const playerCar = createCar(0x111111, true); // Simsiyah Oyuncu Aracı
+// BEMBEYAZ OYUNCU ARABASI
+const playerCar = createCar(0xffffff, true); 
 scene.add(playerCar);
 let currentLane = 3;
 playerCar.position.set(lanes[currentLane], 0, 0);
 
 /* =========================================================
-   GAME PHYSICS & VARIABLES (YUMUŞAK HIZLANMA / FREN)
+   GAME PHYSICS & VARIABLES (PÜRÜZSÜZ & AKAN FİZİK)
 ========================================================= */
 let currentSpeed = 0.0;  
-let maxSpeed = 5.0;      
-// YENİ: İvme ve fren güçleri pürüzsüzleştirildi (Daha gerçekçi)
-let accelerationRate = .006; 
-let brakingPower = .025;  
-let friction = .0015;
+let maxSpeed = 5.5;      
+// YENİ: İvme ve fren güçleri mükemmel şekilde dengelendi (Akıp gitme hissi)
+let accelerationRate = .0035; // Daha sakin ivmelenme
+let brakingPower = .012;      // Daha tok, kayarak duran fren
+let friction = .001;          // ÇOK DÜŞÜK: Gazdan ayağını çekince araba akıp gider!
 
 let steeringVelocity = 0;
 let isAccelerating = false;
@@ -756,11 +772,11 @@ function spawnCoin(laneX, z) {
 }
 
 /* =========================================================
-   TRAFFIC (CANLI VE GÖRÜNÜR RENKLER)
+   TRAFFIC (BEMBEYAZ ARAÇLAR)
 ========================================================= */
 const trafficCars = [];
-// YENİ: Karanlıkta patlayan, çok net görünen renkler
-const trafficColors = [0xffffff, 0xeeeeee, 0x00ffff, 0xff00ff, 0xffff00, 0x00ffcc];
+// YENİ: Tüm trafik araçları beyaz. Sadece array içindeki tek renk beyaz olacak.
+const trafficColors = [0xffffff]; 
 
 function getAbsoluteSpeedForLane(laneIndex) {
     if(laneIndex <= 1) return 3.5 + Math.random() * 0.8;       
@@ -769,7 +785,7 @@ function getAbsoluteSpeedForLane(laneIndex) {
 }
 
 function spawnTrafficCar() {
-    if (trafficCars.length > 45) return; // YENİ: Araç limiti 45'e çıkarıldı (Daha Yoğun Trafik)
+    if (trafficCars.length > 45) return; 
 
     const lane = Math.floor(Math.random() * laneCount);
     const initialSpeed = getAbsoluteSpeedForLane(lane);
@@ -781,6 +797,7 @@ function spawnTrafficCar() {
         spawnZ = -250 - Math.random() * 150;
     }
 
+    // Daima beyaz döner
     const color = trafficColors[Math.floor(Math.random() * trafficColors.length)];
     const car = createCar(color, false);
     
@@ -804,7 +821,7 @@ function spawnTrafficCar() {
 }
 
 /* =========================================================
-   CYBER DEER (DAHA SIK)
+   CYBER DEER 
 ========================================================= */
 const deerList = [];
 function createDeer() {
@@ -968,11 +985,11 @@ function animate(currentTime) {
     lastTime = currentTime;
 
     /* =================================================
-       YUMUŞATILMIŞ FİZİK MOTORU 
+       YUMUŞATILMIŞ FİZİK MOTORU (AKAN SÜRÜŞ)
     ================================================= */
     if (isNitro && nitro > 0) {
         nitro -= .4 * delta;
-        currentSpeed += .012 * delta; 
+        currentSpeed += .010 * delta; 
         
         playerExhausts.forEach(ex => {
             ex.visible = true;
@@ -982,14 +999,14 @@ function animate(currentTime) {
     } else {
         playerExhausts.forEach(ex => ex.visible = false);
         if (isAccelerating) {
-            currentSpeed += accelerationRate * delta; // Yumuşak hızlanma
+            currentSpeed += accelerationRate * delta; // Çok yumuşak hızlanma
         } else {
-            currentSpeed -= friction * delta; // Tatlı yavaşlama
+            currentSpeed -= friction * delta; // YAĞ GİBİ AKAR (Sürtünme çok az)
         }
     }
 
     if (isBraking) {
-        currentSpeed -= brakingPower * delta; // Yumuşatılmış ama güçlü fren
+        currentSpeed -= brakingPower * delta; // Tok ve gerçekçi fren
         playerTaillightMat.color.setHex(0xff0000);
         playerTaillightMat.emissive.setHex(0xff0000);
         playerTaillightMat.emissiveIntensity = 4.0; 
@@ -1018,7 +1035,7 @@ function animate(currentTime) {
     camera.fov += (targetFov - camera.fov) * .08;
     camera.updateProjectionMatrix();
 
-    /* PLAYER STEERING */
+    /* PLAYER STEERING & DYNAMIC CAMERA LEANING (YENİ!) */
     const targetX = lanes[currentLane];
     const diffX = targetX - playerCar.position.x;
     
@@ -1030,6 +1047,12 @@ function animate(currentTime) {
 
         playerCar.rotation.z = -diffX * .08;
         playerCar.rotation.y = -steeringVelocity * .4;
+        
+        // Kamera merkezkaç kuvvetine (sağa-sola) göre hafif yatar
+        if(!isFirstPerson) {
+            camera.rotation.z = -steeringVelocity * 0.1;
+        }
+
         if (steeringWheel) steeringWheel.rotation.z = -diffX * 2.0;
         
         playerFrontWheels.forEach(wheel => {
@@ -1038,10 +1061,14 @@ function animate(currentTime) {
     } else {
         playerCar.rotation.z *= 0.85;
         playerCar.rotation.y *= 0.85;
+        camera.rotation.z *= 0.9;
     }
 
     /* WORLD MOVEMENT */
     const worldSpeed = currentSpeed * delta;
+
+    gridGeo.position.z += worldSpeed; // Neon zemin ızgarası kayar
+    if(gridGeo.position.z > 20) gridGeo.position.z -= 20;
 
     lines.forEach(line => {
         line.position.z += worldSpeed;
@@ -1107,7 +1134,7 @@ function animate(currentTime) {
     }
 
     /* =================================================
-       YENİ FİZİK: GÖRECELİ TRAFİK HAREKETİ 
+       GÖRECELİ TRAFİK HAREKETİ 
     ================================================= */
     for (let i = trafficCars.length - 1; i >= 0; i--) {
         const traffic = trafficCars[i];
@@ -1161,12 +1188,12 @@ function animate(currentTime) {
         }
     }
 
-    /* DEER (YENİ: GEYİK SIKLIĞI ARTIRILDI) */
+    /* DEER */
     deerTimer -= delta;
     if (deerTimer <= 0) {
-        if (Math.random() < .02) { // Geyik ihtimali artırıldı
+        if (Math.random() < .02) { 
             spawnDeer();
-            deerTimer = 150 + Math.random() * 300; // Süre kısaltıldı
+            deerTimer = 150 + Math.random() * 300; 
         }
     }
 
@@ -1190,13 +1217,12 @@ function animate(currentTime) {
         }
     }
 
-    /* TRAFFIC SPAWN (YENİ: ÇOK DAHA YOĞUN ARAÇ SPWANI) */
+    /* TRAFFIC SPAWN */
     spawnTimer += delta;
     const difficulty = Math.min(1, distance / 10);
-    // Limit oldukça düşürüldü -> Araçlar çok hızlı dolar
     const spawnLimit = Math.max(5, 25 - currentSpeed * 5 - difficulty * 10);
 
-    if (spawnTimer > spawnLimit && trafficCars.length < 45) { // Max araç kapasitesi artırıldı
+    if (spawnTimer > spawnLimit && trafficCars.length < 45) { 
         spawnTrafficCar();
         spawnTimer = 0;
     }
@@ -1215,6 +1241,8 @@ function animate(currentTime) {
         camera.position.x = playerCar.position.x - .4;
         camera.position.y = 1.12 + shakeY;
         camera.position.z = playerCar.position.z - .15;
+        // First person modunda eğilme iptal edildi (mide bulantısı yapmaması için)
+        camera.rotation.z = 0; 
         camera.lookAt(playerCar.position.x - .4, 1.05, playerCar.position.z - 70);
     } else {
         playerCar.userData.cabin.visible = true;
