@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Cyber Drive X - 3D Endless Highway (Definitive Update)</title>
+<title>Cyber Drive X - Next-Gen Update</title>
 
 <style>
 * {
@@ -13,11 +13,11 @@
 body {
     margin: 0;
     overflow: hidden;
-    background: #87CEEB;
+    background: #090915;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     user-select: none;
-    -webkit-user-select: none; /* Mobil seçim engeli */
-    touch-action: none; /* Mobil kaydırma engeli */
+    -webkit-user-select: none; 
+    touch-action: none; 
 }
 
 canvas {
@@ -45,9 +45,10 @@ canvas {
 }
 
 #score {
-    font-size: 38px;
+    font-size: 42px;
     font-weight: 900;
-    color: #ffde00;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 2px 2px 4px #000;
 }
 
 #highscore {
@@ -65,10 +66,11 @@ canvas {
 
 #multiplier {
     display: none;
-    color: #ff5500;
-    font-size: 22px;
+    color: #ff00ff;
+    font-size: 24px;
     font-weight: 900;
     margin-top: 8px;
+    text-shadow: 0 0 15px #ff00ff;
     animation: pulse .5s infinite alternate;
 }
 
@@ -80,10 +82,7 @@ canvas {
     color: #00ffff;
     font-size: 30px;
     font-weight: 900;
-    text-shadow:
-        0 0 10px #00ffff,
-        0 0 25px #00ffff,
-        2px 2px 4px #000;
+    text-shadow: 0 0 10px #00ffff, 0 0 25px #00ffff, 2px 2px 4px #000;
     opacity: 0;
     pointer-events: none;
     z-index: 15;
@@ -94,6 +93,7 @@ canvas {
     font-size: 22px;
     font-weight: 900;
     margin-top: 4px;
+    text-shadow: 0 0 10px #ff9d00;
     transition: transform 0.1s;
 }
 
@@ -103,17 +103,16 @@ canvas {
     padding: 14px;
     border-radius: 10px;
     backdrop-filter: blur(7px);
-    border: 1px solid rgba(255,255,255,.2);
+    border: 1px solid rgba(0, 255, 255,.3);
+    box-shadow: 0 0 15px rgba(0,255,255,0.2);
     line-height: 1.55;
     margin-top: 10px;
 }
 
-#instructions b {
-    color: #00ffff;
-}
+#instructions b { color: #00ffff; }
 
 /* =========================
-   SPEEDOMETER
+   SPEEDOMETER & NITRO
 ========================= */
 
 #speedometer {
@@ -122,9 +121,7 @@ canvas {
     right: 30px;
     color: #00ffff;
     text-align: right;
-    text-shadow:
-        0 0 10px rgba(0,255,255,.8),
-        2px 2px 4px rgba(0,0,0,.9);
+    text-shadow: 0 0 15px rgba(0,255,255,.9), 2px 2px 4px rgba(0,0,0,.9);
     font-family: monospace;
     pointer-events: none;
     z-index: 10;
@@ -132,7 +129,7 @@ canvas {
 }
 
 #speed-val {
-    font-size: 64px;
+    font-size: 72px;
     font-weight: 900;
     line-height: .8;
 }
@@ -144,15 +141,11 @@ canvas {
     opacity: .8;
 }
 
-/* =========================
-   NITRO
-========================= */
-
 #nitro-container {
     position: absolute;
     bottom: 30px;
     left: 30px;
-    width: 240px;
+    width: 260px;
     z-index: 10;
     pointer-events: none;
     color: white;
@@ -161,120 +154,133 @@ canvas {
 }
 
 #nitro-label {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 900;
     margin-bottom: 5px;
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff;
 }
 
 #nitro-bar-bg {
     width: 100%;
-    height: 16px;
-    background: rgba(0,0,0,.65);
-    border: 1px solid rgba(255,255,255,.3);
+    height: 18px;
+    background: rgba(0,0,0,.8);
+    border: 2px solid rgba(0,255,255,.5);
     border-radius: 20px;
     overflow: hidden;
+    box-shadow: 0 0 10px rgba(0,255,255,0.3);
 }
 
 #nitro-bar {
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #00ffff, #0066ff);
-    box-shadow: 0 0 15px #00ffff;
+    background: linear-gradient(90deg, #ff00ff, #00ffff);
+    box-shadow: 0 0 20px #00ffff;
     transition: width .1s linear;
 }
 
 /* =========================
-   MOBILE CONTROLS (NEW)
+   MOBILE CONTROLS 
 ========================= */
 #mobile-controls {
     position: absolute;
     bottom: 30px;
     left: 0;
     width: 100%;
-    display: none; /* Mobilde açılacak */
+    display: none; 
     justify-content: space-between;
-    padding: 0 20px;
+    padding: 0 15px;
     z-index: 50;
     pointer-events: none;
 }
 
 .mob-btn {
     pointer-events: auto;
-    width: 75px;
-    height: 75px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(0, 255, 255, 0.6);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 900;
-    font-size: 28px;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    font-size: 26px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    text-shadow: 0 0 5px #00ffff;
 }
 
 .mob-btn:active {
-    background: rgba(255, 255, 255, 0.4);
-    transform: scale(0.95);
+    background: rgba(0, 255, 255, 0.4);
+    transform: scale(0.92);
 }
 
 .mob-pedal {
-    border-radius: 15px;
-    width: 80px;
-    font-size: 20px;
+    border-radius: 12px;
+    width: 75px;
+    font-size: 16px;
+    height: 60px;
 }
 
-/* Mobil Görünüm Optimizasyonu */
 @media (max-width: 900px) {
     #mobile-controls { display: flex; }
     #instructions { display: none; }
-    #speedometer { bottom: 130px; right: 20px; }
-    #nitro-container { bottom: 130px; left: 20px; width: 160px; }
-    #speed-val { font-size: 48px; }
+    #speedometer { bottom: 120px; right: 15px; }
+    #nitro-container { bottom: 120px; left: 15px; width: 150px; }
+    #speed-val { font-size: 52px; }
     #ui { top: 10px; left: 10px; }
-    #score { font-size: 28px; }
+    #score { font-size: 32px; }
 }
 
-
 /* =========================
-   GAME OVER
+   EFFECTS & GAME OVER
 ========================= */
+#crash-flash {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #ff0000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.1s ease-out;
+}
 
 #gameover {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0,0,0,.88);
-    padding: 40px 55px;
+    background: rgba(10,0,10,.95);
+    padding: 40px 60px;
     border-radius: 18px;
-    border: 2px solid #ff4444;
-    color: #ff4444;
-    font-size: 48px;
+    border: 3px solid #ff0055;
+    color: #ff0055;
+    font-size: 52px;
     font-weight: 900;
-    text-shadow: 2px 2px 8px rgba(0,0,0,.9);
+    text-shadow: 0 0 20px #ff0055;
     display: none;
     text-align: center;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(15px);
     z-index: 60;
+    box-shadow: 0 0 40px rgba(255,0,85,0.4);
 }
 
 #gameover-score {
     color: white;
-    font-size: 23px;
-    margin-top: 12px;
+    font-size: 24px;
+    margin-top: 15px;
     text-shadow: none;
     line-height: 1.6;
 }
 
 .restart-btn {
-    margin-top: 25px;
-    padding: 13px 32px;
-    font-size: 21px;
+    margin-top: 30px;
+    padding: 15px 40px;
+    font-size: 22px;
     font-weight: bold;
-    background: #10b981;
+    background: linear-gradient(45deg, #00ffff, #ff00ff);
     color: white;
     border: none;
     border-radius: 8px;
@@ -282,20 +288,17 @@ canvas {
     pointer-events: auto;
     transition: .2s;
     text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(0,255,255,0.4);
 }
 
 .restart-btn:hover {
-    background: #059669;
-    transform: scale(1.05);
+    transform: scale(1.08);
+    box-shadow: 0 0 30px rgba(255,0,255,0.6);
 }
 
-/* =========================
-   ANIMATIONS
-========================= */
-
 @keyframes pulse {
-    from { transform: scale(1); text-shadow: 0 0 10px #ff5500; }
-    to { transform: scale(1.1); text-shadow: 0 0 20px #ffea00; }
+    from { transform: scale(1); text-shadow: 0 0 10px #ff00ff; }
+    to { transform: scale(1.1); text-shadow: 0 0 25px #00ffff; }
 }
 
 @keyframes nearMissAnimation {
@@ -308,14 +311,14 @@ canvas {
 .combo-bump { animation: comboBump .3s ease; }
 
 @keyframes scoreBump {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
+    0% { transform: scale(1); color:#00ffff; }
+    50% { transform: scale(1.3); color:#fff; text-shadow: 0 0 20px #fff;}
+    100% { transform: scale(1); color:#00ffff;}
 }
 
 @keyframes comboBump {
     0% { transform: scale(1); color: #ff9d00;}
-    50% { transform: scale(1.4); color: #ffffff;}
+    50% { transform: scale(1.4); color: #ffffff; text-shadow: 0 0 20px #fff;}
     100% { transform: scale(1); color: #ff9d00;}
 }
 </style>
@@ -324,6 +327,8 @@ canvas {
 </head>
 
 <body>
+
+<div id="crash-flash"></div>
 
 <!-- =========================
      HUD
@@ -334,14 +339,14 @@ canvas {
         <div id="highscore">En Yüksek: 0</div>
         <div id="distance">Mesafe: 0.0 km</div>
         <div id="combo">Combo: x1.0</div>
-        <div id="multiplier">🔥 HIZ BONUSU!</div>
+        <div id="multiplier">🔥 IŞIK HIZI!</div>
     </div>
     <div id="instructions">
-        <b>KONTROLLER</b><br>
+        <b>KONTROLLER (NEXT-GEN)</b><br>
         ⬅️ / A : Sola<br>
         ➡️ / D : Sağa<br>
         ⬆️ / W : Gaz<br>
-        ⬇️ / S : Fren<br>
+        ⬇️ / S : Zımba Fren!<br>
         🚀 SPACE : Nitro<br>
         📷 V : Kamera
     </div>
@@ -351,7 +356,7 @@ canvas {
      SPEED
 ========================= -->
 <div id="speedometer">
-    <div id="speed-val">60</div>
+    <div id="speed-val">0</div>
     <div id="speed-unit">KM/H</div>
 </div>
 
@@ -359,25 +364,27 @@ canvas {
      NITRO
 ========================= -->
 <div id="nitro-container">
-    <div id="nitro-label">🚀 NITRO</div>
+    <div id="nitro-label">🚀 NİTRO</div>
     <div id="nitro-bar-bg">
         <div id="nitro-bar"></div>
     </div>
 </div>
 
-<div id="nearMiss">NEAR MISS +50</div>
+<div id="nearMiss">YAKIN GEÇİŞ +50</div>
 
 <!-- =========================
-     MOBILE CONTROLS (NEW)
+     MOBILE CONTROLS
 ========================= -->
 <div id="mobile-controls">
-    <div style="display:flex; gap: 15px;">
+    <div style="display:flex; gap: 10px;">
         <div id="btn-left" class="mob-btn">◀</div>
         <div id="btn-right" class="mob-btn">▶</div>
     </div>
-    <div style="display:flex; gap: 15px;">
-        <div id="btn-brake" class="mob-btn mob-pedal" style="background: rgba(255,70,70,0.3);">FREN</div>
-        <div id="btn-gas" class="mob-btn mob-pedal" style="background: rgba(70,255,70,0.3);">GAZ</div>
+    <div style="display:flex; gap: 10px;">
+        <div id="btn-brake" class="mob-btn mob-pedal" style="border-color: #ff0055; color:#ff0055; text-shadow:0 0 5px #ff0055;">FREN</div>
+        <div id="btn-gas" class="mob-btn mob-pedal" style="border-color: #00ff00; color:#00ff00; text-shadow:0 0 5px #00ff00;">GAZ</div>
+        <!-- EKSİK OLAN NİTRO BUTONU EKLENDİ -->
+        <div id="btn-nitro" class="mob-btn mob-pedal" style="border-color: #ff00ff; color:#ff00ff; text-shadow:0 0 5px #ff00ff; font-size:14px;">NİTRO</div>
     </div>
 </div>
 
@@ -385,13 +392,12 @@ canvas {
      GAME OVER
 ========================= -->
 <div id="gameover">
-    KAZA YAPTIN!
+    SİSTEM ÇÖKTÜ!
     <div id="gameover-score"></div>
-    <button class="restart-btn" onclick="location.reload()">Tekrar Oyna</button>
+    <button class="restart-btn" onclick="location.reload()">Sistemi Yeniden Başlat</button>
 </div>
 
 <script>
-
 /* =========================================================
    HIGH SCORE
 ========================================================= */
@@ -399,49 +405,58 @@ let bestScore = Number(localStorage.getItem("endlessHighScore") || 0);
 document.getElementById("highscore").innerText = "En Yüksek: " + bestScore;
 
 /* =========================================================
-   THREE.JS & ATMOSPHERE VARIABLES
+   THREE.JS & ADVANCED ATMOSPHERE
 ========================================================= */
 const scene = new THREE.Scene();
 
 const skyColors = {
-    day: new THREE.Color(0x87CEEB),
-    sunset: new THREE.Color(0xff7744),
-    night: new THREE.Color(0x090915)
+    day: new THREE.Color(0x2a6b99),
+    sunset: new THREE.Color(0x9a3255),
+    night: new THREE.Color(0x060714)
 };
 
 scene.background = new THREE.Color(skyColors.day);
-scene.fog = new THREE.Fog(skyColors.day, 70, 300);
+scene.fog = new THREE.FogExp2(skyColors.day, 0.0035);
 
-const camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, .1, 400);
+const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, .1, 600);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
 document.body.appendChild(renderer.domElement);
 
 /* =========================================================
-   LIGHTING
+   DYNAMIC LIGHTING & MASSIVE SUN
 ========================================================= */
-const ambientLight = new THREE.AmbientLight(0xffffff, .72);
+const ambientLight = new THREE.AmbientLight(0xffffff, .6);
 scene.add(ambientLight);
 
-const sun = new THREE.DirectionalLight(0xffffff, 1);
-sun.position.set(-30, 70, -80);
+const sun = new THREE.DirectionalLight(0xffddaa, 1.5);
+sun.position.set(-50, 80, -120);
 sun.castShadow = true;
 sun.shadow.mapSize.width = 2048;
 sun.shadow.mapSize.height = 2048;
 sun.shadow.camera.near = .5;
-sun.shadow.camera.far = 350;
-sun.shadow.camera.left = -100;
-sun.shadow.camera.right = 100;
-sun.shadow.camera.top = 100;
-sun.shadow.camera.bottom = -100;
+sun.shadow.camera.far = 400;
+sun.shadow.camera.left = -120;
+sun.shadow.camera.right = 120;
+sun.shadow.camera.top = 120;
+sun.shadow.camera.bottom = -120;
 scene.add(sun);
 
+// DEV GÜNEŞ (Atmosferi baştan yaratır)
+const bgSunGeo = new THREE.CircleGeometry(160, 64);
+const bgSunMat = new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.9, fog: false });
+const bgSun = new THREE.Mesh(bgSunGeo, bgSunMat);
+bgSun.position.set(0, 80, -450);
+scene.add(bgSun);
+
 /* =========================================================
-   ROAD
+   ROAD & ENVIRONMENT
 ========================================================= */
 const roadWidth = 28;
 const laneCount = 7;
@@ -451,30 +466,25 @@ for (let i = 0; i < laneCount; i++) {
     lanes.push(-roadWidth / 2 + laneWidth / 2 + i * laneWidth);
 }
 
-/* =========================================================
-   GRASS & ROAD MESHES
-========================================================= */
-const grassGeo = new THREE.PlaneGeometry(400, 600); // Genişletildi
-const grassMat = new THREE.MeshStandardMaterial({ color: 0x3f9b4b });
+const grassGeo = new THREE.PlaneGeometry(500, 800); 
+const grassMat = new THREE.MeshStandardMaterial({ color: 0x1b3a24, roughness: 1.0 });
 const grass = new THREE.Mesh(grassGeo, grassMat);
 grass.rotation.x = -Math.PI / 2;
 grass.receiveShadow = true;
 scene.add(grass);
 
-const roadGeo = new THREE.PlaneGeometry(roadWidth, 600);
-const roadMat = new THREE.MeshStandardMaterial({ color: 0x242424, roughness: .92 });
+// Asfalt daha kaliteli ve yansıtıcı
+const roadGeo = new THREE.PlaneGeometry(roadWidth, 800);
+const roadMat = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.5, metalness: 0.3 });
 const road = new THREE.Mesh(roadGeo, roadMat);
 road.rotation.x = -Math.PI / 2;
 road.position.y = .01;
 road.receiveShadow = true;
 scene.add(road);
 
-/* =========================================================
-   ROAD EDGE LINES & MARKINGS
-========================================================= */
-const roadEdgeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-const edgeGeo = new THREE.PlaneGeometry(.22, 600);
-
+// Şerit çizgileri
+const roadEdgeMat = new THREE.MeshBasicMaterial({ color: 0x00ffff }); // Cyberpunk kenarlar
+const edgeGeo = new THREE.PlaneGeometry(.25, 800);
 const leftEdge = new THREE.Mesh(edgeGeo, roadEdgeMat);
 leftEdge.rotation.x = -Math.PI / 2;
 leftEdge.position.set(-roadWidth / 2, .025, 0);
@@ -486,12 +496,12 @@ rightEdge.position.set(roadWidth / 2, .025, 0);
 scene.add(rightEdge);
 
 const lines = [];
-const lineGeo = new THREE.PlaneGeometry(.18, 5);
-const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const lineGeo = new THREE.PlaneGeometry(.18, 6);
+const lineMat = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
 
 for (let lane = 1; lane < laneCount; lane++) {
     const x = -roadWidth / 2 + laneWidth * lane;
-    for (let i = 0; i < 45; i++) {
+    for (let i = 0; i < 60; i++) {
         const line = new THREE.Mesh(lineGeo, lineMat);
         line.rotation.x = -Math.PI / 2;
         line.position.set(x, .026, -i * 12);
@@ -501,197 +511,92 @@ for (let lane = 1; lane < laneCount; lane++) {
 }
 
 /* =========================================================
-   ROAD REFLECTORS
-========================================================= */
-const reflectors = [];
-const reflectorGeo = new THREE.BoxGeometry(.15, .08, .35);
-const reflectorMat = new THREE.MeshBasicMaterial({ color: 0xffd900 });
-
-for (let i = 0; i < 60; i++) {
-    const z = -i * 10;
-    [-roadWidth / 2 - .3, roadWidth / 2 + .3].forEach(x => {
-        const reflector = new THREE.Mesh(reflectorGeo, reflectorMat);
-        reflector.position.set(x, .08, z);
-        scene.add(reflector);
-        reflectors.push(reflector);
-    });
-}
-
-/* =========================================================
-   MOUNTAINS (YENİLENMİŞ KALİTELİ DAĞLAR)
+   MOUNTAINS, TREES & HOUSES
 ========================================================= */
 function createMountain(x, z, scale) {
     const group = new THREE.Group();
-    
-    // Ana Dağ Gövdesi (Poligon sayısı artırıldı)
-    const geo = new THREE.ConeGeometry(25, 45, 16); 
-    const mat = new THREE.MeshStandardMaterial({ color: 0x445a4b, roughness: 0.9 });
+    const geo = new THREE.ConeGeometry(25, 55, 12); 
+    const mat = new THREE.MeshStandardMaterial({ color: 0x1a2520, roughness: 1.0 });
     const mountain = new THREE.Mesh(geo, mat);
     mountain.castShadow = true;
     mountain.receiveShadow = true;
     group.add(mountain);
 
-    // Karlı Zirve (YENİ)
-    const snowGeo = new THREE.ConeGeometry(12.5, 18, 16);
-    const snowMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+    const snowGeo = new THREE.ConeGeometry(11, 20, 12);
+    const snowMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 });
     const snow = new THREE.Mesh(snowGeo, snowMat);
-    snow.position.y = 13.5; // Zirveye oturttuk
+    snow.position.y = 17.5; 
     group.add(snow);
 
-    group.position.set(x, 22, z);
+    group.position.set(x, 27, z);
     group.scale.set(scale, scale, scale);
     scene.add(group);
 }
-
-for (let i = 0; i < 18; i++) {
-    createMountain(
-        (Math.random() > .5 ? 1 : -1) * (50 + Math.random() * 80),
-        -Math.random() * 320,
-        .6 + Math.random() * .9
-    );
+for (let i = 0; i < 20; i++) {
+    createMountain( (Math.random() > .5 ? 1 : -1) * (60 + Math.random() * 100), -Math.random() * 400, .7 + Math.random() * 1.2 );
 }
 
-/* =========================================================
-   CLOUDS (YENİ)
-========================================================= */
-const clouds = [];
-function createCloud() {
-    const cloud = new THREE.Group();
-    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, flatShading: true });
-    
-    // Rastgele 3-5 küpten oluşan bir bulut kümesi yarat
-    const numParts = 3 + Math.random() * 3;
-    for(let i = 0; i < numParts; i++) {
-        const geo = new THREE.BoxGeometry(15 + Math.random()*25, 10 + Math.random()*15, 15 + Math.random()*25);
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set((Math.random()-0.5)*20, (Math.random()-0.5)*8, (Math.random()-0.5)*20);
-        cloud.add(mesh);
-    }
-    
-    cloud.position.set(
-        (Math.random() > 0.5 ? 1 : -1) * (40 + Math.random() * 150),
-        60 + Math.random() * 40,
-        -300 - Math.random() * 300
-    );
-    scene.add(cloud);
-    clouds.push(cloud);
-}
-
-// Başlangıç bulutları
-for(let i=0; i < 12; i++) createCloud();
-
-
-/* =========================================================
-   FARMHOUSES (YENİ - ÇİFTLİK EVLERİ)
-========================================================= */
-const houses = [];
-function createHouse() {
-    const group = new THREE.Group();
-    
-    // Evin Gövdesi
-    const bodyGeo = new THREE.BoxGeometry(10, 7, 12);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, roughness: 0.8 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 3.5;
-    body.castShadow = true;
-    group.add(body);
-    
-    // Evin Çatısı
-    const roofGeo = new THREE.ConeGeometry(9, 5, 4);
-    const roofMat = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.9 });
-    const roof = new THREE.Mesh(roofGeo, roofMat);
-    roof.position.y = 9.5;
-    roof.rotation.y = Math.PI / 4;
-    roof.castShadow = true;
-    group.add(roof);
-
-    return group;
-}
-
-function spawnHouse(z = -400) {
-    const house = createHouse();
-    const side = Math.random() > 0.5 ? 1 : -1;
-    house.position.set(
-        side * (roadWidth / 2 + 30 + Math.random() * 30), // Yoldan güvenli mesafe
-        0,
-        z
-    );
-    
-    // Evin dönüşünü yola doğru ayarla
-    if(side === -1) house.rotation.y = Math.PI / 2;
-    else house.rotation.y = -Math.PI / 2;
-
-    scene.add(house);
-    houses.push(house);
-}
-
-// Başlangıç evleri
-for(let z = -350; z < 50; z += 180) {
-    if(Math.random() > 0.4) spawnHouse(z);
-}
-
-
-/* =========================================================
-   TREES
-========================================================= */
 const trees = [];
 function createTree() {
     const group = new THREE.Group();
-    const trunkGeo = new THREE.CylinderGeometry(.4, .65, 2.5, 8);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5b3a29 });
-    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    trunk.position.y = 1.25;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(.4, .7, 3, 8), new THREE.MeshStandardMaterial({ color: 0x3a2010 }));
+    trunk.position.y = 1.5;
     trunk.castShadow = true;
     group.add(trunk);
-
-    const leafGeo = new THREE.ConeGeometry(2.8, 6, 8);
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x236b3d });
-    const leaves = new THREE.Mesh(leafGeo, leafMat);
-    leaves.position.y = 4.5;
+    const leaves = new THREE.Mesh(new THREE.ConeGeometry(3, 7, 8), new THREE.MeshStandardMaterial({ color: 0x114422 }));
+    leaves.position.y = 5;
     leaves.castShadow = true;
     group.add(leaves);
-
     return group;
 }
-
-function spawnTree(z = -250) {
+function spawnTree(z = -300) {
     const tree = createTree();
     const side = Math.random() > .5 ? 1 : -1;
-    tree.position.set(
-        side * (roadWidth / 2 + 5 + Math.random() * 35),
-        0,
-        z
-    );
-    const scale = .7 + Math.random() * .9;
+    tree.position.set(side * (roadWidth / 2 + 5 + Math.random() * 40), 0, z);
+    const scale = .8 + Math.random() * 1;
     tree.scale.set(scale, scale, scale);
     scene.add(tree);
     trees.push(tree);
 }
+for (let z = -350; z < 50; z += 12) if (Math.random() > .2) spawnTree(z);
 
-for (let z = -280; z < 30; z += 14) {
-    if (Math.random() > .15) spawnTree(z);
+const houses = [];
+function createHouse() {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(10, 7, 12), new THREE.MeshStandardMaterial({ color: 0x888888 }));
+    body.position.y = 3.5; body.castShadow = true; group.add(body);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(9, 5, 4), new THREE.MeshStandardMaterial({ color: 0x440000 }));
+    roof.position.y = 9.5; roof.rotation.y = Math.PI / 4; roof.castShadow = true; group.add(roof);
+    // Parlayan camlar
+    const win1 = new THREE.Mesh(new THREE.BoxGeometry(2,2,0.1), new THREE.MeshBasicMaterial({color:0xffffaa}));
+    win1.position.set(0, 4, 6.05); group.add(win1);
+    return group;
 }
+function spawnHouse(z = -400) {
+    const house = createHouse();
+    const side = Math.random() > 0.5 ? 1 : -1;
+    house.position.set(side * (roadWidth / 2 + 35 + Math.random() * 40), 0, z);
+    house.rotation.y = side === -1 ? Math.PI / 2 : -Math.PI / 2;
+    scene.add(house);
+    houses.push(house);
+}
+for(let z = -400; z < 50; z += 200) if(Math.random() > 0.3) spawnHouse(z);
 
 /* =========================================================
-   SPEED PARTICLES
+   WARP SPEED LINES (ÇAĞ ATLATAN HIZ EFEKTİ)
 ========================================================= */
-const particleCount = 260;
-const particleGeo = new THREE.BufferGeometry();
-const particlePositions = new Float32Array(particleCount * 3);
-
-for (let i = 0; i < particleCount * 3; i += 3) {
-    particlePositions[i] = (Math.random() - .5) * 50;
-    particlePositions[i + 1] = Math.random() * 7;
-    particlePositions[i + 2] = -Math.random() * 300;
+const warpLines = new THREE.Group();
+const warpMat = new THREE.MeshBasicMaterial({color: 0x00ffff, transparent: true, opacity: 0.6});
+const warpGeo = new THREE.BoxGeometry(0.1, 0.1, 15);
+for(let i=0; i<80; i++) {
+    let m = new THREE.Mesh(warpGeo, warpMat);
+    m.position.set((Math.random()-0.5)*80, 2+Math.random()*15, -Math.random()*400);
+    warpLines.add(m);
 }
-
-particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
-const particleMat = new THREE.PointsMaterial({ color: 0xffffff, size: .11, transparent: true, opacity: .55 });
-const speedParticles = new THREE.Points(particleGeo, particleMat);
-scene.add(speedParticles);
+scene.add(warpLines);
 
 /* =========================================================
-   CAR CREATOR
+   NEXT-GEN CAR CREATOR (FIZIKSEL MATERYALLER)
 ========================================================= */
 let playerTaillightMat;
 let playerExhausts = [];
@@ -701,161 +606,115 @@ let playerHeadlights = [];
 
 function createCar(colorStr, isPlayer = false) {
     const carGroup = new THREE.Group();
-    const carMat = new THREE.MeshStandardMaterial({ color: colorStr, metalness: .65, roughness: .2 });
-    const blackMat = new THREE.MeshStandardMaterial({ color: 0x090909, roughness: .75 });
+    
+    // FİZİKSEL OTO BOYASI (Cam gibi parlar)
+    const carMat = new THREE.MeshPhysicalMaterial({ 
+        color: colorStr, metalness: 0.9, roughness: 0.4, 
+        clearcoat: 1.0, clearcoatRoughness: 0.1 
+    });
+    const blackMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
 
-    /* CHASSIS */
     const chassisGeo = new THREE.BoxGeometry(2.25, .32, 4.5);
     const chassis = new THREE.Mesh(chassisGeo, blackMat);
-    chassis.position.y = .35;
-    chassis.castShadow = true;
-    carGroup.add(chassis);
+    chassis.position.y = .35; chassis.castShadow = true; carGroup.add(chassis);
 
-    /* BODY */
     const bodyGeo = new THREE.BoxGeometry(2.05, .32, 4.2);
     const body = new THREE.Mesh(bodyGeo, carMat);
-    body.position.y = .62;
-    body.castShadow = true;
-    carGroup.add(body);
+    body.position.y = .62; body.castShadow = true; carGroup.add(body);
 
-    /* HOOD */
     const hoodGeo = new THREE.BoxGeometry(1.9, .22, 1.35);
     const hood = new THREE.Mesh(hoodGeo, carMat);
-    hood.position.set(0, .75, -1.55);
-    hood.rotation.x = Math.PI / 14;
-    carGroup.add(hood);
+    hood.position.set(0, .75, -1.55); hood.rotation.x = Math.PI / 14; carGroup.add(hood);
 
-    /* CABIN */
     const cabinGroup = new THREE.Group();
     const cabinGeo = new THREE.BoxGeometry(1.48, .45, 1.65);
-    const glassMat = new THREE.MeshStandardMaterial({ color: 0x05080a, metalness: .9, roughness: .08 });
+    const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x000000, metalness: 1.0, roughness: 0.0, transmission: 0.5 });
     const cabin = new THREE.Mesh(cabinGeo, glassMat);
-    cabin.position.set(0, 1, .15);
-    cabinGroup.add(cabin);
+    cabin.position.set(0, 1, .15); cabinGroup.add(cabin);
 
-    /* WINDSHIELD */
     const windshieldGeo = new THREE.BoxGeometry(1.38, .5, .08);
     const windshield = new THREE.Mesh(windshieldGeo, glassMat);
-    windshield.position.set(0, 1, -.7);
-    windshield.rotation.x = -Math.PI / 6;
-    cabinGroup.add(windshield);
+    windshield.position.set(0, 1, -.7); windshield.rotation.x = -Math.PI / 6; cabinGroup.add(windshield);
 
     const rearGlass = new THREE.Mesh(windshieldGeo, glassMat);
-    rearGlass.position.set(0, 1, 1);
-    rearGlass.rotation.x = Math.PI / 6;
-    cabinGroup.add(rearGlass);
+    rearGlass.position.set(0, 1, 1); rearGlass.rotation.x = Math.PI / 6; cabinGroup.add(rearGlass);
 
     carGroup.add(cabinGroup);
     if (isPlayer) carGroup.userData.cabin = cabinGroup;
 
-    /* SIDE NEON */
-    const neonGeo = new THREE.BoxGeometry(2.12, .055, 3.8);
-    const neonMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-    const neon = new THREE.Mesh(neonGeo, neonMat);
-    neon.position.y = .47;
-    carGroup.add(neon);
+    // NEON ŞERİTLER
+    const neonMat = new THREE.MeshBasicMaterial({ color: isPlayer ? 0x00ffff : 0xff00ff });
+    const neon = new THREE.Mesh(new THREE.BoxGeometry(2.12, .055, 3.8), neonMat);
+    neon.position.y = .47; carGroup.add(neon);
 
-    /* HEADLIGHT */
-    const headlightGeo = new THREE.BoxGeometry(1.7, .09, .12);
     const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const headlights = new THREE.Mesh(headlightGeo, headlightMat);
-    headlights.position.set(0, .7, -2.2);
-    carGroup.add(headlights);
+    const headlights = new THREE.Mesh(new THREE.BoxGeometry(1.7, .09, .12), headlightMat);
+    headlights.position.set(0, .7, -2.2); carGroup.add(headlights);
 
     if (isPlayer) {
-        const pLight1 = new THREE.SpotLight(0xffffff, 0, 250, Math.PI/5, 0.6, 1);
-        pLight1.position.set(-0.7, 1, -2.2);
-        pLight1.target.position.set(-0.7, 0, -50);
-        carGroup.add(pLight1);
-        carGroup.add(pLight1.target);
+        const pLight1 = new THREE.SpotLight(0xffffff, 0, 300, Math.PI/4, 0.8, 1);
+        pLight1.position.set(-0.7, 1, -2.2); pLight1.target.position.set(-0.7, 0, -60);
+        carGroup.add(pLight1); carGroup.add(pLight1.target);
 
-        const pLight2 = new THREE.SpotLight(0xffffff, 0, 250, Math.PI/5, 0.6, 1);
-        pLight2.position.set(0.7, 1, -2.2);
-        pLight2.target.position.set(0.7, 0, -50);
-        carGroup.add(pLight2);
-        carGroup.add(pLight2.target);
+        const pLight2 = new THREE.SpotLight(0xffffff, 0, 300, Math.PI/4, 0.8, 1);
+        pLight2.position.set(0.7, 1, -2.2); pLight2.target.position.set(0.7, 0, -60);
+        carGroup.add(pLight2); carGroup.add(pLight2.target);
 
         playerHeadlights.push(pLight1, pLight2);
     }
 
-    /* TAILLIGHT */
-    const taillightMat = new THREE.MeshBasicMaterial({ color: 0x770000 });
+    // ARKA STOP LAMBALARI (Emissive Parlama)
+    const taillightMat = new THREE.MeshStandardMaterial({ color: 0x990000, emissive: 0x550000, emissiveIntensity: 1 });
     if (isPlayer) playerTaillightMat = taillightMat;
-    const taillight = new THREE.Mesh(headlightGeo, taillightMat);
-    taillight.position.set(0, .68, 2.15);
-    carGroup.add(taillight);
+    const taillight = new THREE.Mesh(new THREE.BoxGeometry(1.7, .09, .12), taillightMat);
+    taillight.position.set(0, .68, 2.15); carGroup.add(taillight);
 
-    /* SPOILER */
     if (isPlayer) {
-        const spoilerGeo = new THREE.BoxGeometry(1.9, .06, .4);
-        const spoiler = new THREE.Mesh(spoilerGeo, carMat);
-        spoiler.position.set(0, 1, 1.85);
-        carGroup.add(spoiler);
+        const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.9, .06, .4), carMat);
+        spoiler.position.set(0, 1, 1.85); carGroup.add(spoiler);
 
-        /* EXHAUST */
-        const exhaustGeo = new THREE.ConeGeometry(.16, .85, 8);
-        exhaustGeo.rotateX(Math.PI / 2);
-        const exhaustMat = new THREE.MeshBasicMaterial({ color: 0xff8c00, transparent: true, opacity: .9 });
-
+        const exhaustMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: .9 });
         for (let i = -1; i <= 1; i += 2) {
-            const exhaust = new THREE.Mesh(exhaustGeo, exhaustMat);
-            exhaust.position.set(i * .5, .42, 2.35);
-            exhaust.visible = false;
-            carGroup.add(exhaust);
-            playerExhausts.push(exhaust);
+            const exhaust = new THREE.Mesh(new THREE.ConeGeometry(.16, .85, 8).rotateX(Math.PI / 2), exhaustMat);
+            exhaust.position.set(i * .5, .42, 2.35); exhaust.visible = false;
+            carGroup.add(exhaust); playerExhausts.push(exhaust);
         }
-
-        /* STEERING WHEEL */
-        const steeringGeo = new THREE.TorusGeometry(.21, .035, 8, 24);
-        const steeringMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        steeringWheel = new THREE.Mesh(steeringGeo, steeringMat);
-        steeringWheel.position.set(-.4, .85, -.35);
-        steeringWheel.rotation.x = -Math.PI / 8;
+        steeringWheel = new THREE.Mesh(new THREE.TorusGeometry(.21, .035, 8, 24), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+        steeringWheel.position.set(-.4, .85, -.35); steeringWheel.rotation.x = -Math.PI / 8;
         carGroup.add(steeringWheel);
     }
 
-    /* WHEELS */
-    const wheelGeo = new THREE.CylinderGeometry(.37, .37, .28, 18);
     const tireMat = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: .95 });
-    const rimGeo = new THREE.CylinderGeometry(.21, .21, .3, 10);
-    const rimMat = new THREE.MeshStandardMaterial({ color: 0xbfc4c7, metalness: .9, roughness: .15 });
-
-    const wheelPositions = [
-        [-1.05, .38, 1.35], [1.05, .38, 1.35],
-        [-1.05, .38, -1.35], [1.05, .38, -1.35]
-    ];
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: .9, roughness: .2 });
+    const wheelPositions = [ [-1.05, .38, 1.35], [1.05, .38, 1.35], [-1.05, .38, -1.35], [1.05, .38, -1.35] ];
 
     wheelPositions.forEach((pos, index) => {
-        const wheel = new THREE.Mesh(wheelGeo, tireMat);
-        const rim = new THREE.Mesh(rimGeo, rimMat);
-        wheel.add(rim);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(...pos);
-        wheel.castShadow = true;
+        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.37, .37, .28, 18), tireMat);
+        const rim = new THREE.Mesh(new THREE.CylinderGeometry(.21, .21, .3, 10), rimMat);
+        wheel.add(rim); wheel.rotation.z = Math.PI / 2; wheel.position.set(...pos); wheel.castShadow = true;
         carGroup.add(wheel);
         if (isPlayer && index < 2) playerFrontWheels.push(wheel);
     });
+    
+    // YAPAY ZEKA ARAÇLARINI İLERİ BAKACAK ŞEKİLDE DÜZELTTİK (Artık sana doğru gelmiyorlar, ileri gidiyorlar)
+    // Dışarıda rotation y = 0 yapılacak.
 
     return carGroup;
 }
 
-/* =========================================================
-   PLAYER
-========================================================= */
-const playerCar = createCar(0xff3030, true);
+const playerCar = createCar(0x000000, true); // Simsiyah Yarasa!
 scene.add(playerCar);
 let currentLane = 3;
 playerCar.position.set(lanes[currentLane], 0, 0);
 
 /* =========================================================
-   GAME PHYSICS & VARIABLES
+   GAME PHYSICS & VARIABLES (SIFIRA İNEN HIZ)
 ========================================================= */
-let baseSpeed = 1.0;
-let currentSpeed = 1.0;
-let maxSpeed = 4.4; // Max hız hafifçe daha artırıldı
-let accelerationRate = .006;
-let brakingPower = .018;
-let friction = .004;
+let currentSpeed = 0.0;  // Başlangıç hızı 0 olsun, gaza basınca artsın
+let maxSpeed = 4.8;      
+let accelerationRate = .008;
+let brakingPower = .03;  // Zımba fren gücü
+let friction = .003;
 
 let steeringVelocity = 0;
 let isAccelerating = false;
@@ -878,9 +737,8 @@ let skyTime = Math.PI / 2;
    COINS
 ========================================================= */
 const coins = [];
-const coinGeo = new THREE.CylinderGeometry(.42, .42, .1, 18);
-coinGeo.rotateX(Math.PI / 2);
-const coinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: .9, roughness: .15 });
+const coinMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 1.0, roughness: 0.1, emissive: 0x332200 });
+const coinGeo = new THREE.CylinderGeometry(.42, .42, .1, 18).rotateX(Math.PI / 2);
 
 function spawnCoin(laneX, z) {
     const coin = new THREE.Mesh(coinGeo, coinMat);
@@ -891,48 +749,47 @@ function spawnCoin(laneX, z) {
 }
 
 /* =========================================================
-   TRAFFIC (AKILLI ŞERİT HIZLARI - YENİ)
+   TRAFFIC (MÜTHİŞ GÖRECELİ HIZ SİSTEMİ)
 ========================================================= */
 const trafficCars = [];
-const trafficColors = [
-    0x3344ff, 0x22cc55, 0xffaa00, 0x888888, 
-    0xffffff, 0x550055, 0x00aaaa, 0xff4444, 0x222222
-];
+const trafficColors = [0x3344ff, 0x22cc55, 0xffaa00, 0xffffff, 0x550055, 0x00aaaa, 0xff0044];
 
-// YENİ: Şeride göre araç hızı belirleyen fonksiyon.
-// 0,1 (Sol) = Hızlı | 2,3,4 (Orta) = Normal | 5,6 (Sağ) = Yavaş
-function getTargetSpeedForLane(laneIndex) {
-    if(laneIndex <= 1) return 1.6 + Math.random() * 0.9;      // Sol Şerit (Çok Hızlı)
-    else if(laneIndex >= 5) return 0.5 + Math.random() * 0.5; // Sağ Şerit (Yavaş)
-    else return 1.0 + Math.random() * 0.6;                    // Orta Şeritler
+// Mutlak hızlar: Sol şerit en hızlı, sağ şerit yavaş.
+function getAbsoluteSpeedForLane(laneIndex) {
+    if(laneIndex <= 1) return 2.8 + Math.random() * 0.8;       // Sol (Çok Hızlı)
+    else if(laneIndex >= 5) return 1.2 + Math.random() * 0.6;  // Sağ (Yavaş)
+    else return 2.0 + Math.random() * 0.8;                     // Orta
 }
 
 function spawnTrafficCar() {
-    if (trafficCars.length > 28) return; // Araç limiti 16'dan 28'e çıkartıldı (Daha yoğun)
+    if (trafficCars.length > 25) return; 
 
     const color = trafficColors[Math.floor(Math.random() * trafficColors.length)];
     const car = createCar(color, false);
     const lane = Math.floor(Math.random() * laneCount);
-    const z = -220 - Math.random() * 100;
-
+    
+    // Araçlar ileride spawnlanır
+    const z = -250 - Math.random() * 150;
     car.position.set(lanes[lane], 0, z);
-    car.rotation.y = Math.PI;
+    
+    // ARTIK Math.PI YOK! Araçlar seninle aynı yöne (ileri) bakıyor.
+    car.rotation.y = 0; 
     scene.add(car);
 
-    let initialSpeed = getTargetSpeedForLane(lane);
+    let initialSpeed = getAbsoluteSpeedForLane(lane);
 
     trafficCars.push({
         mesh: car,
         lane: lane,
-        speed: initialSpeed,
+        absSpeed: initialSpeed,
         targetSpeed: initialSpeed,
-        changeTimer: 100 + Math.random() * 250,
+        changeTimer: 80 + Math.random() * 200,
         targetLane: lane
     });
 
-    if (Math.random() > .4) {
+    if (Math.random() > .5) {
         let coinLane = Math.floor(Math.random() * laneCount);
-        spawnCoin(lanes[coinLane], z - 7);
+        spawnCoin(lanes[coinLane], z - 10);
     }
 }
 
@@ -946,31 +803,22 @@ function createDeer() {
     const darkMat = new THREE.MeshStandardMaterial({ color: 0x4a2d18 });
 
     const body = new THREE.Mesh(new THREE.BoxGeometry(1.25, .55, 2.2), brownMat);
-    body.position.y = 1.25;
-    deer.add(body);
-
+    body.position.y = 1.25; deer.add(body);
     const head = new THREE.Mesh(new THREE.BoxGeometry(.55, .55, .7), brownMat);
-    head.position.set(0, 1.65, -1.2);
-    deer.add(head);
-
+    head.position.set(0, 1.65, -1.2); deer.add(head);
     const neck = new THREE.Mesh(new THREE.BoxGeometry(.4, .8, .4), brownMat);
-    neck.position.set(0, 1.5, -.8);
-    neck.rotation.x = -.35;
-    deer.add(neck);
+    neck.position.set(0, 1.5, -.8); neck.rotation.x = -.35; deer.add(neck);
 
     const legGeo = new THREE.CylinderGeometry(.09, .1, 1.15, 8);
     const legPositions = [[-.45, .55, -.65], [.45, .55, -.65], [-.45, .55, .65], [.45, .55, .65]];
     legPositions.forEach(position => {
         const leg = new THREE.Mesh(legGeo, darkMat);
-        leg.position.set(...position);
-        deer.add(leg);
+        leg.position.set(...position); deer.add(leg);
     });
 
-    const antlerGeo = new THREE.BoxGeometry(.06, .6, .06);
     for (let side = -1; side <= 1; side += 2) {
-        const antler = new THREE.Mesh(antlerGeo, darkMat);
-        antler.position.set(side * .2, 2.05, -1.35);
-        deer.add(antler);
+        const antler = new THREE.Mesh(new THREE.BoxGeometry(.06, .6, .06), darkMat);
+        antler.position.set(side * .2, 2.05, -1.35); deer.add(antler);
     }
     return deer;
 }
@@ -980,12 +828,7 @@ function spawnDeer() {
     const deer = createDeer();
     const fromLeft = Math.random() > .5;
 
-    deer.position.set(
-        fromLeft ? -roadWidth / 2 - 7 : roadWidth / 2 + 7,
-        0,
-        -180 - Math.random() * 100
-    );
-
+    deer.position.set( fromLeft ? -roadWidth / 2 - 7 : roadWidth / 2 + 7, 0, -200 - Math.random() * 100 );
     deer.rotation.y = fromLeft ? Math.PI / 2 : -Math.PI / 2;
     scene.add(deer);
 
@@ -1024,9 +867,8 @@ function showNearMiss(points) {
     el.style.animation = "nearMissAnimation .8s ease forwards";
 }
 
-
 /* =========================================================
-   CONTROLS (DESKTOP & MOBILE INTEGRATION)
+   CONTROLS 
 ========================================================= */
 function moveLeft() { if(!isGameOver && currentLane > 0) currentLane--; }
 function moveRight() { if(!isGameOver && currentLane < laneCount - 1) currentLane++; }
@@ -1034,30 +876,31 @@ function pressGas() { if(!isGameOver) isAccelerating = true; }
 function releaseGas() { isAccelerating = false; }
 function pressBrake() { if(!isGameOver) isBraking = true; }
 function releaseBrake() { isBraking = false; }
+function pressNitro() { if(!isGameOver) isNitro = true; }
+function releaseNitro() { isNitro = false; }
 
-// Keyboard Events
 window.addEventListener("keydown", e => {
     if (isGameOver) return;
     if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") moveLeft();
     else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") moveRight();
     else if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") pressGas();
     else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") pressBrake();
-    else if (e.key === " ") isNitro = true;
+    else if (e.key === " ") pressNitro();
     else if (e.key === "v" || e.key === "V") isFirstPerson = !isFirstPerson;
 });
 window.addEventListener("keyup", e => {
     if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") releaseGas();
     if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") releaseBrake();
-    if (e.key === " ") isNitro = false;
+    if (e.key === " ") releaseNitro();
 });
 
-// Mobile Events (Touch Support)
+// Mobile Kontroller
 const btnL = document.getElementById('btn-left');
 const btnR = document.getElementById('btn-right');
 const btnG = document.getElementById('btn-gas');
 const btnB = document.getElementById('btn-brake');
+const btnN = document.getElementById('btn-nitro'); // Nitro Eklendi!
 
-// Prevent context menu/zoom on double tap
 const preventDef = (e) => e.preventDefault();
 
 btnL.addEventListener('touchstart', (e)=>{ preventDef(e); moveLeft(); });
@@ -1077,12 +920,25 @@ btnB.addEventListener('mousedown', (e)=>{ preventDef(e); pressBrake(); });
 btnB.addEventListener('mouseup', (e)=>{ preventDef(e); releaseBrake(); });
 btnB.addEventListener('mouseleave', (e)=>{ preventDef(e); releaseBrake(); });
 
+// MOBIL NITRO
+btnN.addEventListener('touchstart', (e)=>{ preventDef(e); pressNitro(); });
+btnN.addEventListener('touchend', (e)=>{ preventDef(e); releaseNitro(); });
+btnN.addEventListener('mousedown', (e)=>{ preventDef(e); pressNitro(); });
+btnN.addEventListener('mouseup', (e)=>{ preventDef(e); releaseNitro(); });
+btnN.addEventListener('mouseleave', (e)=>{ preventDef(e); releaseNitro(); });
+
+
 /* =========================================================
-   GAME OVER
+   CRASH (PATLAMA EFEKTI)
 ========================================================= */
 function crash() {
     if (isGameOver) return;
     isGameOver = true;
+
+    // Flaş efekti
+    const flash = document.getElementById('crash-flash');
+    flash.style.opacity = 0.9;
+    setTimeout(() => { flash.style.opacity = 0; }, 300);
 
     if (score > bestScore) {
         bestScore = score;
@@ -1111,40 +967,45 @@ function animate(currentTime) {
     lastTime = currentTime;
 
     /* ATMOSPHERE & DAY/NIGHT */
-    skyTime += 0.0004 * delta; 
+    skyTime += 0.0003 * delta; 
     let cycle = (Math.sin(skyTime) + 1) / 2; 
     let currentColor = new THREE.Color();
     let currentAmbient = 0.72;
 
     if(cycle > 0.5) {
         currentColor.lerpColors(skyColors.sunset, skyColors.day, (cycle - 0.5) * 2);
-        currentAmbient = 0.4 + ((cycle - 0.5) * 2) * 0.35; 
+        currentAmbient = 0.3 + ((cycle - 0.5) * 2) * 0.4; 
     } else {
         currentColor.lerpColors(skyColors.night, skyColors.sunset, cycle * 2);
-        currentAmbient = 0.15 + (cycle * 2) * 0.25; 
+        currentAmbient = 0.1 + (cycle * 2) * 0.2; 
     }
     
     scene.background.copy(currentColor);
     scene.fog.color.copy(currentColor);
     ambientLight.intensity = currentAmbient;
-    sun.intensity = Math.max(0.1, cycle * 1.2);
+    
+    bgSun.position.y = 80 + (cycle - 0.5) * 100;
+    let sunColor = new THREE.Color();
+    sunColor.lerpColors(new THREE.Color(0xff0000), new THREE.Color(0xffcc00), cycle);
+    bgSun.material.color.copy(sunColor);
 
     let nightFactor = Math.max(0, 1 - (cycle / 0.6));
-    playerHeadlights.forEach(l => {
-        l.intensity = nightFactor * 3;
-    });
+    playerHeadlights.forEach(l => { l.intensity = nightFactor * 4; });
 
-    /* PHYSICS */
+    /* =================================================
+       FİZİK MOTORU (FRENE BASINCA SIFIRA DÜŞER)
+    ================================================= */
     if (isNitro && nitro > 0) {
-        nitro -= .75 * delta;
-        currentSpeed += .012 * delta;
-        if (currentSpeed > maxSpeed * 1.25) currentSpeed = maxSpeed * 1.25;
-
-        playerExhausts.forEach(exhaust => {
-            exhaust.visible = true;
-            exhaust.scale.z = 1.4 + Math.random() * .8;
+        nitro -= .8 * delta;
+        currentSpeed += .015 * delta;
+        
+        playerExhausts.forEach(ex => {
+            ex.visible = true;
+            ex.scale.z = 1.8 + Math.random() * 1.5;
+            ex.material.color.setHex(Math.random() > 0.5 ? 0x00ffff : 0xff00ff);
         });
     } else {
+        playerExhausts.forEach(ex => ex.visible = false);
         if (isAccelerating) {
             currentSpeed += accelerationRate * delta;
         } else {
@@ -1152,48 +1013,63 @@ function animate(currentTime) {
         }
     }
 
+    // FREN YAPINCA DÜŞÜŞ, IŞIKLAR PATLAR!
     if (isBraking) {
         currentSpeed -= brakingPower * delta;
         playerTaillightMat.color.setHex(0xff0000);
+        playerTaillightMat.emissive.setHex(0xff0000);
+        playerTaillightMat.emissiveIntensity = 3.0; // Fren parlaması
     } else {
-        playerTaillightMat.color.setHex(0x990000);
+        playerTaillightMat.color.setHex(0x770000);
+        playerTaillightMat.emissive.setHex(0x330000);
+        playerTaillightMat.emissiveIntensity = 1.0;
     }
 
-    currentSpeed = Math.max(.45, Math.min(currentSpeed, maxSpeed * (isNitro ? 1.25 : 1)));
+    // ARTIK HIZ GERÇEKTEN SIFIRA İNEBİLİR
+    currentSpeed = Math.max(0, Math.min(currentSpeed, maxSpeed * (isNitro ? 1.3 : 1)));
 
-    if (!isNitro) nitro += .045 * delta;
+    if (!isNitro) nitro += .05 * delta;
     nitro = Math.max(0, Math.min(100, nitro));
     document.getElementById("nitro-bar").style.width = nitro + "%";
 
     /* SPEED HUD & FOV */
-    const displaySpeed = Math.floor(currentSpeed * 60);
+    const displaySpeed = Math.floor(currentSpeed * 65);
     document.getElementById("speed-val").innerText = displaySpeed;
-    const speedBonus = displaySpeed > 160;
+    const speedBonus = displaySpeed > 180;
     document.getElementById("multiplier").style.display = speedBonus ? "block" : "none";
 
-    let targetFov = 62;
-    if (speedBonus) targetFov += (displaySpeed - 160) * .04;
-    if (isNitro) targetFov += 12;
+    let targetFov = 65;
+    if (speedBonus) targetFov += (displaySpeed - 180) * .05;
+    if (isNitro) targetFov += 15;
+    if (currentSpeed < 1) targetFov = 60; // Dururken dar açılı kamera
     camera.fov += (targetFov - camera.fov) * .08;
     camera.updateProjectionMatrix();
 
     /* PLAYER STEERING */
     const targetX = lanes[currentLane];
     const diffX = targetX - playerCar.position.x;
-    steeringVelocity += diffX * .045;
-    steeringVelocity *= .82;
-    playerCar.position.x += steeringVelocity * delta;
-    playerCar.position.x += diffX * .035;
-
-    playerCar.rotation.z = -diffX * .075;
-    playerCar.rotation.y = -steeringVelocity * .35;
-    if (steeringWheel) steeringWheel.rotation.z = -diffX * 1.8;
     
-    playerFrontWheels.forEach(wheel => {
-        wheel.rotation.y = THREE.MathUtils.clamp(-diffX * .4, -.35, .35);
-    });
+    // Sadece hızın varsa dönebilirsin
+    if(currentSpeed > 0.1) {
+        steeringVelocity += diffX * .05;
+        steeringVelocity *= .80;
+        playerCar.position.x += steeringVelocity * delta;
+        playerCar.position.x += diffX * .04;
 
-    /* WORLD MOVEMENT */
+        playerCar.rotation.z = -diffX * .08;
+        playerCar.rotation.y = -steeringVelocity * .4;
+        if (steeringWheel) steeringWheel.rotation.z = -diffX * 2.0;
+        
+        playerFrontWheels.forEach(wheel => {
+            wheel.rotation.y = THREE.MathUtils.clamp(-diffX * .5, -.4, .4);
+        });
+    } else {
+        // Dururken araba düzelir
+        playerCar.rotation.z *= 0.9;
+        playerCar.rotation.y *= 0.9;
+    }
+
+    /* WORLD MOVEMENT (Sen durursan dünya durur) */
     const worldSpeed = currentSpeed * delta;
 
     lines.forEach(line => {
@@ -1213,29 +1089,30 @@ function animate(currentTime) {
     }
     speedParticles.geometry.attributes.position.needsUpdate = true;
 
+    // WARP CIZGILERI EFEKTI
+    warpLines.children.forEach(m => {
+        m.position.z += worldSpeed * 4;
+        m.scale.z = Math.max(1, currentSpeed * 2); // Hızlandıkça çizgiler uzar
+        if(m.position.z > 50) m.position.z -= 450;
+    });
+
     /* TREES & HOUSES & CLOUDS MOVEMENT */
     for (let i = trees.length - 1; i >= 0; i--) {
         const tree = trees[i];
         tree.position.z += worldSpeed;
-        if (tree.position.z > 30) {
-            scene.remove(tree);
-            trees.splice(i, 1);
-        }
+        if (tree.position.z > 30) { scene.remove(tree); trees.splice(i, 1); }
     }
-    if (Math.random() < .055 * currentSpeed) spawnTree(-300);
+    if (Math.random() < .05 * currentSpeed) spawnTree(-350);
 
     for (let i = houses.length - 1; i >= 0; i--) {
         const house = houses[i];
         house.position.z += worldSpeed;
-        if (house.position.z > 50) {
-            scene.remove(house);
-            houses.splice(i, 1);
-        }
+        if (house.position.z > 50) { scene.remove(house); houses.splice(i, 1); }
     }
-    if (Math.random() < .01 * currentSpeed) spawnHouse(-450); // Nadir ev spawnlanması
+    if (Math.random() < .01 * currentSpeed) spawnHouse(-450); 
 
     clouds.forEach(c => {
-        c.position.z += worldSpeed * 0.2; // Bulutlar yavaş gelir
+        c.position.z += worldSpeed * 0.2 + 0.1; // Sen dursan bile bulutlar hafifçe hareket eder
         if (c.position.z > 100) {
             c.position.z -= 800;
             c.position.x = (Math.random() > 0.5 ? 1 : -1) * (40 + Math.random() * 150);
@@ -1248,7 +1125,7 @@ function animate(currentTime) {
 
     comboTimer -= delta;
     if (comboTimer <= 0 && combo > 1.0) {
-        combo = Math.max(1, combo - .006 * delta);
+        combo = Math.max(1, combo - .01 * delta);
         updateComboDisplay();
     }
 
@@ -1256,54 +1133,54 @@ function animate(currentTime) {
     for (let i = coins.length - 1; i >= 0; i--) {
         const coin = coins[i];
         coin.position.z += worldSpeed;
-        coin.rotation.z += .12 * delta;
+        coin.rotation.z += .15 * delta;
 
         const dz = Math.abs(playerCar.position.z - coin.position.z);
         const dx = Math.abs(playerCar.position.x - coin.position.x);
 
         if (dz < 2.5 && dx < 1.5) {
-            scene.remove(coin);
-            coins.splice(i, 1);
-
+            scene.remove(coin); coins.splice(i, 1);
             let earned = speedBonus ? 100 : 50;
             score += Math.floor(earned * combo);
-            combo += .25;
-            comboTimer = 180;
-
-            updateScoreDisplay();
-            updateComboDisplay();
-        }
-        else if (coin.position.z > 30) {
-            scene.remove(coin);
-            coins.splice(i, 1);
+            combo += .3; comboTimer = 180;
+            updateScoreDisplay(); updateComboDisplay();
+        } else if (coin.position.z > 30) {
+            scene.remove(coin); coins.splice(i, 1);
         }
     }
 
-    /* TRAFFIC AI (ŞERİT BAZLI AKILLI HIZLAR) */
+    /* =================================================
+       YENİ FİZİK: GÖRECELİ TRAFİK HAREKETİ 
+    ================================================= */
     for (let i = trafficCars.length - 1; i >= 0; i--) {
         const traffic = trafficCars[i];
         const car = traffic.mesh;
 
-        // Hedef hıza yumuşak geçiş
-        traffic.speed += (traffic.targetSpeed - traffic.speed) * 0.01 * delta;
-        car.position.z += worldSpeed * traffic.speed;
+        // Yapay zeka şerit değiştirince hızını yeni şeride uydurur
+        traffic.absSpeed += (traffic.targetSpeed - traffic.absSpeed) * 0.02 * delta;
+        
+        // MÜKEMMEL FİZİK BURADA: Aracın Z hareketi seninle olan "Hız Farkı"na bağlıdır.
+        // EĞER SEN FRENE BASIP DURURSAN (currentSpeed = 0), trafficRelativeSpeed eksi olur (-absSpeed).
+        // Bu sayede sen dursan da trafik yanından "uzaklaşarak (-z)" yoluna devam eder!
+        const trafficRelativeSpeed = currentSpeed - traffic.absSpeed;
+        car.position.z += trafficRelativeSpeed * delta;
 
         traffic.changeTimer -= delta;
         if (traffic.changeTimer <= 0) {
-            traffic.changeTimer = 180 + Math.random() * 300;
+            traffic.changeTimer = 150 + Math.random() * 250;
             if (Math.random() < .45) {
                 const possible = [];
                 if (traffic.lane > 0) possible.push(traffic.lane - 1);
                 if (traffic.lane < laneCount - 1) possible.push(traffic.lane + 1);
                 if (possible.length) {
                     traffic.targetLane = possible[Math.floor(Math.random() * possible.length)];
-                    traffic.targetSpeed = getTargetSpeedForLane(traffic.targetLane); // Yeni şeride göre hızı uyarla
+                    traffic.targetSpeed = getAbsoluteSpeedForLane(traffic.targetLane); 
                 }
             }
         }
 
         const desiredX = lanes[traffic.targetLane];
-        car.position.x += (desiredX - car.position.x) * .025 * delta;
+        car.position.x += (desiredX - car.position.x) * .03 * delta;
         car.rotation.z = (desiredX - car.position.x) * -.05;
         traffic.lane = traffic.targetLane;
 
@@ -1312,21 +1189,24 @@ function animate(currentTime) {
 
         if (dz < 3.4 && dx < 1.65) crash();
         else if (dz < 3 && dx < 3 && dx > 1.65 && !traffic.passedNear) {
-            traffic.passedNear = true; 
-            let points = Math.floor(50 * combo);
-            score += points;
-            combo += .5; 
-            comboTimer = 220;
-            showNearMiss(points);
-            updateScoreDisplay();
-            updateComboDisplay(); 
+            // Sadece senin hızın varken ve onlardan hızlıysan yakın geçiş puanı alırsın
+            if(currentSpeed > traffic.absSpeed) {
+                traffic.passedNear = true; 
+                let points = Math.floor(50 * combo);
+                score += points;
+                combo += .5; 
+                comboTimer = 220;
+                showNearMiss(points);
+                updateScoreDisplay();
+                updateComboDisplay(); 
+            }
         }
 
-        if (car.position.z > 30) {
+        // Araç arkanda kalırsa (sen geçersen) veya sen dururken ufukta kaybolursa sil.
+        if (car.position.z > 30 || car.position.z < -600) {
             scene.remove(car);
             trafficCars.splice(i, 1);
-            score += Math.floor(10 * combo);
-            if (baseSpeed < 2.2) baseSpeed += .002;
+            if(car.position.z > 30) score += Math.floor(15 * combo); // Sen geçtiysen puan
             updateScoreDisplay();
         }
     }
@@ -1345,6 +1225,7 @@ function animate(currentTime) {
         const deer = deerData.mesh;
 
         deer.position.x += deerData.direction * deerData.speed * delta;
+        // Geyik senin hızına göre geride kalır
         deer.position.z += worldSpeed;
         deerData.phase += .35 * delta;
         deer.rotation.z = Math.sin(deerData.phase) * .06;
@@ -1362,9 +1243,8 @@ function animate(currentTime) {
 
     /* TRAFFIC SPAWN (DAHA YOĞUN) */
     spawnTimer += delta;
-    const difficulty = Math.min(1, distance / 8);
-    // Spawn aralığı düşürüldü -> Daha sık araba geliyor
-    const spawnLimit = Math.max(12, 55 - currentSpeed * 10 - difficulty * 15);
+    const difficulty = Math.min(1, distance / 10);
+    const spawnLimit = Math.max(10, 45 - currentSpeed * 8 - difficulty * 15);
 
     if (spawnTimer > spawnLimit) {
         spawnTrafficCar();
@@ -1373,9 +1253,11 @@ function animate(currentTime) {
 
     /* CAMERA SHAKE & POSITION */
     let shakeX = 0, shakeY = 0;
-    if (speedBonus || isNitro) {
-        shakeX = (Math.random() - .5) * (isNitro ? .13 : .045);
-        shakeY = (Math.random() - .5) * (isNitro ? .11 : .035);
+    if (currentSpeed > 1) { // Sadece hareket halindeyken titrer
+        if (speedBonus || isNitro) {
+            shakeX = (Math.random() - .5) * (isNitro ? .15 : .05);
+            shakeY = (Math.random() - .5) * (isNitro ? .12 : .04);
+        }
     }
 
     if (isFirstPerson) {
@@ -1387,15 +1269,15 @@ function animate(currentTime) {
     } else {
         playerCar.userData.cabin.visible = true;
         const targetCamX = playerCar.position.x;
-        camera.position.x += (targetCamX - camera.position.x) * .09;
+        camera.position.x += (targetCamX - camera.position.x) * .1;
         
-        const targetCamZ = playerCar.position.z + 11 + currentSpeed * 2;
-        camera.position.z += (targetCamZ - camera.position.z) * .08;
+        const targetCamZ = playerCar.position.z + 11 + currentSpeed * 1.8;
+        camera.position.z += (targetCamZ - camera.position.z) * .1;
         
         camera.position.y = 4.4 + shakeY;
         camera.position.x += shakeX;
         
-        camera.lookAt(playerCar.position.x, .4, playerCar.position.z - 30);
+        camera.lookAt(playerCar.position.x, .4, playerCar.position.z - 40);
     }
 
     renderer.render(scene, camera);
@@ -1410,11 +1292,13 @@ window.addEventListener("resize", () => {
     camera.updateProjectionMatrix();
 });
 
-for (let i = 0; i < 8; i++) {
-    setTimeout(spawnTrafficCar, i * 600); // Başlangıç arabaları daha hızlı dolar
+for (let i = 0; i < 10; i++) {
+    setTimeout(spawnTrafficCar, i * 400); 
 }
 
 camera.position.set(lanes[3], 4.5, 14);
+// Oyuna başlarken arabanın küçük bir ivmesi olsun (Sıfırdan kalkar)
+currentSpeed = 0; 
 animate(performance.now());
 
 </script>
