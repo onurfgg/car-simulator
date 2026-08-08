@@ -553,29 +553,44 @@ particleGeo.setAttribute("position", new THREE.BufferAttribute(particlePositions
 const speedParticles = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color:0x00ffff, size:.15, transparent:true, opacity:.7 }));
 scene.add(speedParticles);
 
-/* ================= ARABA ÜRETİCİ ================= */
+/* ================= ARABA ÜRETİCİ (TAMAMEN BEYAZ & PARLAYAN) ================= */
 let playerTaillightMat, steeringWheel;
 const playerExhausts = [], playerFrontWheels = [];
-function createCar(colorStr, isPlayer=false){
+
+function createCar(isPlayer=false){
   const carGroup = new THREE.Group();
-  const carMat = new THREE.MeshStandardMaterial({ color:colorStr, metalness:.8, roughness:.2 });
+  
+  // Sadece tüm arabalar beyaz ve parlak (Emissive ile)
+  const carMat = new THREE.MeshStandardMaterial({ 
+    color: 0xffffff, 
+    metalness: .5, 
+    roughness: .2, 
+    emissive: 0xffffff, 
+    emissiveIntensity: 0.4 
+  });
+  
   const blackMat = new THREE.MeshStandardMaterial({ color:0x050505, roughness:.9 });
   const glassMat = new THREE.MeshStandardMaterial({ color:0x111111, metalness:.9, roughness:.1 });
 
   const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.25,.32,4.5), blackMat);
   chassis.position.y = .35; chassis.castShadow = true; carGroup.add(chassis);
+  
   const body = new THREE.Mesh(new THREE.BoxGeometry(2.05,.32,4.2), carMat);
   body.position.y = .62; body.castShadow = true; carGroup.add(body);
+  
   const hood = new THREE.Mesh(new THREE.BoxGeometry(1.9,.22,1.35), carMat);
   hood.position.set(0,.75,-1.55); hood.rotation.x = Math.PI/14; carGroup.add(hood);
 
   const cabinGroup = new THREE.Group();
   const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.48,.45,1.65), glassMat);
   cabin.position.set(0,1,.15); cabinGroup.add(cabin);
+  
   const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.38,.5,.08), glassMat);
   windshield.position.set(0,1,-.7); windshield.rotation.x = -Math.PI/6; cabinGroup.add(windshield);
+  
   const rearGlass = new THREE.Mesh(new THREE.BoxGeometry(1.38,.5,.08), glassMat);
   rearGlass.position.set(0,1,1); rearGlass.rotation.x = Math.PI/6; cabinGroup.add(rearGlass);
+  
   carGroup.add(cabinGroup);
   if(isPlayer) carGroup.userData.cabin = cabinGroup;
 
@@ -626,7 +641,7 @@ function createCar(colorStr, isPlayer=false){
   });
   return carGroup;
 }
-const playerCar = createCar(0x111111, true);
+const playerCar = createCar(true);
 scene.add(playerCar);
 let currentLane = 3;
 playerCar.position.set(lanes[currentLane], 0, 0);
@@ -652,7 +667,7 @@ function spawnCoin(laneX, z){
 
 /* ================= TRAFİK ================= */
 const trafficCars = [];
-const trafficColors = [0x3344ff,0x22cc55,0xffaa00,0xffffff,0x550055,0x00aaaa,0xff0044];
+const trafficColors = [0xffffff]; // Sadece beyaz trafik
 function getAbsoluteSpeedForLane(l){
   if(l<=1) return 3.5+Math.random()*.8;
   if(l>=5) return 1.5+Math.random()*.5;
@@ -668,7 +683,7 @@ function spawnTrafficCar(){
     const initialSpeed = getAbsoluteSpeedForLane(lane);
     const spawnZ = initialSpeed > currentSpeed ? 90+Math.random()*50 : -260-Math.random()*160;
     if(!laneClear(lane, spawnZ, 45)) continue;
-    const car = createCar(trafficColors[Math.floor(Math.random()*trafficColors.length)], false);
+    const car = createCar(false);
     car.position.set(lanes[lane], 0, spawnZ);
     scene.add(car);
     trafficCars.push({ mesh:car, lane, absSpeed:initialSpeed, targetSpeed:initialSpeed,
@@ -1038,7 +1053,7 @@ function animate(currentTime){
       AudioSys.whoosh(.3,.25);
     }
     // Sen geçtin → puan
-    if(!traffic.passed && car.position.z < -35){ traffic.passed = true; addScore(15); }
+    if(!traffic.passed && car.position.z < -35 && currentSpeed>traffic.absSpeed){ traffic.passed = true; addScore(15); }
     if(car.position.z > 90 || car.position.z < -650){
       scene.remove(car); trafficCars.splice(i,1);
     }
