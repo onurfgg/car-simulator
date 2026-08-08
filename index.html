@@ -179,7 +179,7 @@ canvas {
 }
 
 /* =========================
-   MOBILE CONTROLS (Ergonomic)
+   MOBILE CONTROLS 
 ========================= */
 #mobile-controls {
     position: absolute;
@@ -344,7 +344,7 @@ canvas {
         <b>SYNTHWAVE KONTROLLERİ</b><br>
         ⬅️ / A : Sola Kır<br>
         ➡️ / D : Sağa Kır<br>
-        ⬆️ / W : Gaz (Akıcı İvme)<br>
+        ⬆️ / W : Akıcı Gaz<br>
         ⬇️ / S : Yumuşak Fren<br>
         🚀 SPACE : Nitro<br>
         📷 V : Kamera Değiştir
@@ -453,7 +453,7 @@ for(let i=0; i<9; i++) {
 }
 
 /* =========================================================
-   ROAD & NEON GRID (ÇAĞ ATLATAN YENİLİK)
+   ROAD & NEON GRID 
 ========================================================= */
 const roadWidth = 28;
 const laneCount = 7;
@@ -478,7 +478,6 @@ road.position.y = .01;
 road.receiveShadow = true;
 scene.add(road);
 
-// HAREKETLİ NEON ZEMİN IZGARASI (GRID) - Çağ atlatan görsel
 const gridGeo = new THREE.GridHelper(800, 60, 0xff00ff, 0x5500aa);
 gridGeo.position.y = 0.015;
 scene.add(gridGeo);
@@ -604,7 +603,7 @@ const speedParticles = new THREE.Points(particleGeo, particleMat);
 scene.add(speedParticles);
 
 /* =========================================================
-   CAR CREATOR (BEMBEYAZ VE PARLAK)
+   CAR CREATOR (BEYAZ VE PARLAK ARAÇLAR)
 ========================================================= */
 let playerTaillightMat;
 let playerExhausts = [];
@@ -612,16 +611,16 @@ let steeringWheel;
 let playerFrontWheels = [];
 let playerHeadlights = [];
 
-function createCar(colorHex, isPlayer = false) {
+function createCar(isPlayer = false) {
     const carGroup = new THREE.Group();
     
-    // YENİ: Bütün arabalar BEMBEYAZ! Hafif emissive parlama ile gece parlıyorlar.
+    // Tümü Bembeyaz ve Parlayan Materyal
     const carMat = new THREE.MeshStandardMaterial({ 
-        color: colorHex, 
+        color: 0xffffff, 
         metalness: 0.8, 
         roughness: 0.1,
-        emissive: 0x222222, // Hafif karanlıkta parlama
-        emissiveIntensity: 0.5
+        emissive: 0xffffff, // Kendi kendine parlama eklendi
+        emissiveIntensity: isPlayer ? 0.2 : 0.6 // Oyuncu daha az parlar göz almaması için, trafik daha net parlar
     });
     
     const blackMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.9 });
@@ -654,20 +653,7 @@ function createCar(colorHex, isPlayer = false) {
     carGroup.add(cabinGroup);
     if (isPlayer) carGroup.userData.cabin = cabinGroup;
 
-    // YENİ ÇAĞ ATLATAN ÖZELLİK: OYUNCU ARABASININ ALTINDAKİ NEON IŞIKLANDIRMA (UNDERGLOW)
-    if (isPlayer) {
-        const underglowGeo = new THREE.PlaneGeometry(3.5, 6);
-        const underglowMat = new THREE.MeshBasicMaterial({ 
-            color: 0x00ffff, 
-            transparent: true, 
-            opacity: 0.5, 
-            blending: THREE.AdditiveBlending 
-        });
-        const underglow = new THREE.Mesh(underglowGeo, underglowMat);
-        underglow.rotation.x = -Math.PI / 2;
-        underglow.position.y = 0.05; // Yere tam yapışık neon parlama
-        carGroup.add(underglow);
-    }
+    // Alt Zemin Parlaması Tamamen Kaldırıldı, Sadece araçların kendisi parlayacak!
 
     const neonMat = new THREE.MeshBasicMaterial({ color: isPlayer ? 0x00ffff : 0xff00ff });
     const neon = new THREE.Mesh(new THREE.BoxGeometry(2.12, .055, 3.8), neonMat);
@@ -725,7 +711,7 @@ function createCar(colorHex, isPlayer = false) {
 }
 
 // BEMBEYAZ OYUNCU ARABASI
-const playerCar = createCar(0xffffff, true); 
+const playerCar = createCar(true); 
 scene.add(playerCar);
 let currentLane = 3;
 playerCar.position.set(lanes[currentLane], 0, 0);
@@ -734,11 +720,11 @@ playerCar.position.set(lanes[currentLane], 0, 0);
    GAME PHYSICS & VARIABLES (PÜRÜZSÜZ & AKAN FİZİK)
 ========================================================= */
 let currentSpeed = 0.0;  
-let maxSpeed = 5.5;      
-// YENİ: İvme ve fren güçleri mükemmel şekilde dengelendi (Akıp gitme hissi)
-let accelerationRate = .0035; // Daha sakin ivmelenme
-let brakingPower = .012;      // Daha tok, kayarak duran fren
-let friction = .001;          // ÇOK DÜŞÜK: Gazdan ayağını çekince araba akıp gider!
+let maxSpeed = 5.0;      
+// İvme ve fren güçleri mükemmel şekilde dengelendi (Akıp gitme hissi)
+let accelerationRate = .008; // Pürüzsüz gaz
+let brakingPower = .035;     // Tok, yavaşlayarak duran fren
+let friction = .002;         // DÜŞÜK: Gazdan ayağını çekince araba akıp gider!
 
 let steeringVelocity = 0;
 let isAccelerating = false;
@@ -775,8 +761,6 @@ function spawnCoin(laneX, z) {
    TRAFFIC (BEMBEYAZ ARAÇLAR)
 ========================================================= */
 const trafficCars = [];
-// YENİ: Tüm trafik araçları beyaz. Sadece array içindeki tek renk beyaz olacak.
-const trafficColors = [0xffffff]; 
 
 function getAbsoluteSpeedForLane(laneIndex) {
     if(laneIndex <= 1) return 3.5 + Math.random() * 0.8;       
@@ -797,9 +781,8 @@ function spawnTrafficCar() {
         spawnZ = -250 - Math.random() * 150;
     }
 
-    // Daima beyaz döner
-    const color = trafficColors[Math.floor(Math.random() * trafficColors.length)];
-    const car = createCar(color, false);
+    // Trafik araçları da bembeyaz ve parlayan materyale sahip
+    const car = createCar(false);
     
     car.position.set(lanes[lane], 0, spawnZ);
     car.rotation.y = 0; 
@@ -989,7 +972,7 @@ function animate(currentTime) {
     ================================================= */
     if (isNitro && nitro > 0) {
         nitro -= .4 * delta;
-        currentSpeed += .010 * delta; 
+        currentSpeed += .012 * delta; 
         
         playerExhausts.forEach(ex => {
             ex.visible = true;
@@ -999,7 +982,7 @@ function animate(currentTime) {
     } else {
         playerExhausts.forEach(ex => ex.visible = false);
         if (isAccelerating) {
-            currentSpeed += accelerationRate * delta; // Çok yumuşak hızlanma
+            currentSpeed += accelerationRate * delta; // Çok yumuşak ivme
         } else {
             currentSpeed -= friction * delta; // YAĞ GİBİ AKAR (Sürtünme çok az)
         }
@@ -1035,7 +1018,7 @@ function animate(currentTime) {
     camera.fov += (targetFov - camera.fov) * .08;
     camera.updateProjectionMatrix();
 
-    /* PLAYER STEERING & DYNAMIC CAMERA LEANING (YENİ!) */
+    /* PLAYER STEERING & DYNAMIC CAMERA LEANING */
     const targetX = lanes[currentLane];
     const diffX = targetX - playerCar.position.x;
     
@@ -1067,7 +1050,7 @@ function animate(currentTime) {
     /* WORLD MOVEMENT */
     const worldSpeed = currentSpeed * delta;
 
-    gridGeo.position.z += worldSpeed; // Neon zemin ızgarası kayar
+    gridGeo.position.z += worldSpeed; 
     if(gridGeo.position.z > 20) gridGeo.position.z -= 20;
 
     lines.forEach(line => {
@@ -1134,7 +1117,7 @@ function animate(currentTime) {
     }
 
     /* =================================================
-       GÖRECELİ TRAFİK HAREKETİ 
+       GÖRECELİ TRAFİK HAREKETİ VE SKOR DÜZELTMESİ
     ================================================= */
     for (let i = trafficCars.length - 1; i >= 0; i--) {
         const traffic = trafficCars[i];
@@ -1181,9 +1164,13 @@ function animate(currentTime) {
         }
 
         if (car.position.z > 30 || car.position.z < -600) {
+            // YENİ: Sadece oyuncu aracı gerçekten solladığında (oyuncu hızlıysa) puan alırsın.
+            // Araba senden hızlıysa ve çekip giderse puan YAZMAZ! Skor enflasyonu çözüldü.
+            if(car.position.z > 30 && currentSpeed > traffic.absSpeed) {
+                score += Math.floor(5 * combo); // Geçiş puanı dengelendi
+            }
             scene.remove(car);
             trafficCars.splice(i, 1);
-            if(car.position.z > 30) score += Math.floor(15 * combo); 
             updateScoreDisplay();
         }
     }
@@ -1241,7 +1228,6 @@ function animate(currentTime) {
         camera.position.x = playerCar.position.x - .4;
         camera.position.y = 1.12 + shakeY;
         camera.position.z = playerCar.position.z - .15;
-        // First person modunda eğilme iptal edildi (mide bulantısı yapmaması için)
         camera.rotation.z = 0; 
         camera.lookAt(playerCar.position.x - .4, 1.05, playerCar.position.z - 70);
     } else {
